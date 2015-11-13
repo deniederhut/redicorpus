@@ -697,12 +697,17 @@ def shannon_test(token):
     filename = 'maps/' + token.replace(' ','_') + '_wordmap.txt'
     with open(filename,'r') as f:
         word_map = literal_eval(f.read())
+    filename = 'total1grams.txt'
+    with open(filename, 'r') as f:
+            total_probs = literal_eval(f.read())
     body_length = sum(word_map.values())
     key_length = len(word_map)
-    for key in word_map.keys():
-        p = word_map.get(key)/float(body_length)
-        if p > 0: #8.782069031400928e-09:
-            entropy_list.append(p * math.log(p,2))
+    for key in total_probs.keys():
+        if key in word_map:
+            p = word_map.get(key)/float(body_length)
+            if p > 0: #8.782069031400928e-09:
+                entropy_list.append(p * math.log(p,2))
+        else: entropy_list.append(0)
     shannon = -1 * sum(entropy_list)
     return shannon, key_length, body_length
 
@@ -745,10 +750,12 @@ def shannon_control(p,n=10):
         key_length = len(body)
         if body_length == 0:
             body_length += 1
-        for key in body.keys():
-            p = body.get(key)/float(body_length)
-            if body.get(key) > 0: #8.782069031400928e-09:
-                entropy_list.append(p * math.log(p,2))
+        for key in total_probs.keys():
+            if key in body:
+                p = body.get(key)/float(body_length)
+                if body.get(key) > 0: #8.782069031400928e-09:
+                    entropy_list.append(p * math.log(p,2))
+            else: entropy_list.append(0)
         shannon_list.append(-1 * sum(entropy_list))
         n_total.append(n_comments)
         keys_list.append(key_length)
