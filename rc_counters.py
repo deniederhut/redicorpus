@@ -754,3 +754,18 @@ def shannon_control(p,n=10):
         keys_list.append(key_length)
         size_list.append(body_length)
     return sum(shannon_list)/len(shannon_list), sum(keys_list)/len(keys_list), sum(size_list)/len(size_list), sum(n_total)/len(n_total)
+
+def bing_get(term):
+    """Get term frequency from Microsoft Research Corpus"""
+    import os
+    import requests
+    import time
+    import yaml
+    with open(os.path.join(os.getenv('HOME'), 'creds.yml'), 'r') as f:
+        creds = yaml.load(f)
+    r.response_code == 100
+    url = 'http://weblm.research.microsoft.com/rest.svc/bing-body/apr10/1/jp?u=' + creds['bing-key'] + '&format=json&p=' + term
+    while r.response_code != 200:
+        r = requests.get(url)
+        time.sleep(1)
+    return r.json()
