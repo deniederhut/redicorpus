@@ -6,7 +6,7 @@ from celery import Celery
 
 app = Celery('redicorpus',
              broker='mongodb://localhost:27017/celery',
-             include=['redicorpus.askreddit_getter','redicorpus.redicorpus'])
+             include=['redicorpus.getters.askreddit','redicorpus.redicorpus.redicorpus'])
 
 # Optional configuration, see the application user guide.
 app.conf.update(
