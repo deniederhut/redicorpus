@@ -15,6 +15,7 @@ from redicorpus.celery import app
 import requests
 import yaml
 
+mongo = pymongo.MongoClient()
 snowball = snowball.Englishstemmer()
 wordnet = wordnet.WordNetLemmatizer()
 logging.basicConfig(filename = RCDIR + '/etc/redicorpus.log', level = logging.INFO, format = '%(asctime)s %(message)s')
