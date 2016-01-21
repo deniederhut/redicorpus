@@ -20,48 +20,47 @@ snowball = snowball.Englishstemmer()
 wordnet = wordnet.WordNetLemmatizer()
 logging.basicConfig(filename = RCDIR + '/etc/redicorpus.log', level = logging.INFO, format = '%(asctime)s %(message)s')
 
-class comment(dict):
+class comment(object):
     """A single communicative event"""
 
     def __init__(self, data):
-        if type(data) == dict:
-            self = data
-            if 'raw' not in self:
-                raise ValueError("Comments need a 'raw' value field")
-            self['tokens']['strings'] = word_tokenize(self['raw'])
-            self['tokens']['stems'] = [snowball.stem(token) for token in self['strings']]
-            self['tokens']['lemmas'] = [wordnet.lemmatize(token) for token in             self['strings']
-            if 'date' not in self:
-                self['date'] = datetime.datetime.now()
-            if 'child_id' not in self:
-                self['child_id'] = []
-            if 'polarity' not in self:
-                self['polarity'] = {}
-            self['counted'] = False
-        else:
+        if type(data) != dict:
             raise TypeError
+        self.data = data
+        if 'raw' not in self:
+            raise ValueError("Comments need a 'raw' value field")
+        self.data['tokens']['strings'] = word_tokenize(self.data['raw'])
+        self.data['tokens']['stems'] = [snowball.stem(token) for token in self.data['strings']]
+        self.data['tokens']['lemmas'] = [wordnet.lemmatize(token) for token in self.data['strings']
+        if 'date' not in self.data:
+            self.data['date'] = datetime.datetime.now()
+        if 'child_id' not in self.data:
+            self.data['child_id'] = []
+        if 'polarity' not in self.data:
+            self.data['polarity'] = {}
+        self.data['counted'] = False
 
     @app.task
     def insert(self):
-        collection = pymongo.collection.Collection(self['source'], 'comments')
-        result = collection.insert_one(self)
+        collection = pymongo.collection.Collection(self.data['source'], 'comments')
+        result = collection.insert_one(self.data)
         if result.inserted_count == 1:
             self.count.apply_async(queue='counts')
 
     @app.task
     def count(self, grams=(1,2,3)):
-        database = self['source']
+        database = self.data['source']
         for i in grams:
             collection = pymongo.collection.Collection(database, str(i))
-            _id = datetime.datetime(self['date'].year,
-                                    self['date'].month,
-                                    self['date'].day)
-            for token_type in self['tokens'].keys():
-                for gram in ngrams(self['tokens'][token_type], i):
+            _id = datetime.datetime(self.data['date'].year,
+                                    self.data['date'].month,
+                                    self.data['date'].day)
+            for token_type in self.data['tokens'].keys():
+                for gram in ngrams(self.data['tokens'][token_type], i):
                     result = collection.update_one({'_id' : _id},
                     {'$inc' : {token_type : {gram : {'frequency' : 1}}},
                     {'$inc' : {token_type : {'_total' : 1}}},
-                    {'$push' : {token_type : {gram : {'_id' : self['_id']}}}}},
+                    {'$push' : {token_type : {gram : {'_id' : self.data['_id']}}}}},
                     upsert = True)
         return True
 

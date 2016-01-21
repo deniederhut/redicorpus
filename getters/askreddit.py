@@ -3,6 +3,9 @@
 Script to authenticate and scrape from reddit.com/r/AskReddit
 """
 
+# to do - add language to object
+# to do - change to PRAW
+
 import datetime
 import gzip
 import json
