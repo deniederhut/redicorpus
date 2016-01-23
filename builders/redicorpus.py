@@ -7,28 +7,40 @@ Built on MongoDB
 initialize db client as c
 
 class stringlike(object):
-
+    """Acts like a string, but contains preprocessed string data"""
 
 
 class dictLike(object):
+    """Acts like a dict, but has mongo i/o"""
 
 
 class arrayLike(object):
-
+    """Acts like an array, but has mongo based dict methods"""
 
 
 class stem(stringLike):
+    """A stemmed string"""
+
+    def __init__(self):
+        pass
 
 
 
 class lemma(stringLike):
+    """A lemmatized string"""
+
+    def __init__(self):
+        pass
 
 
 
 class comment(dictLike):
-    """A single communicative event"""
+    """A single communicative event and metadata"""
 
     def __init__(self):
+        pass
+
+    def __repr__(self):
         pass
 
     def from_getter(self, data):
@@ -60,6 +72,15 @@ class body(arrayLike):
     def __init__(self):
         pass
 
+    def __sum__():
+        pass
+
+    def __index__():
+        pass
+
+    def __repr__():
+        pass
+
     def from_db(self):
         set instance data equal to db query result
 
@@ -70,7 +91,7 @@ class body(arrayLike):
         pass
 
 class map(arrayLike):
-    """ """
+    """Conditional probability map for terms"""
 
     def __init__(self):
 
@@ -79,14 +100,17 @@ class map(arrayLike):
     def control():
 
 def get_comment():
+    """Retrieve comment from db"""
     initialize comment object
     return object with data
 
 def get_body():
+    """Retrieve counts by date and type"""
     initialize body object
     return object with data
 
 def get_map():
+    """Retrieve pre-computed map"""
     initialize map object
     if object in db:
         return object with data

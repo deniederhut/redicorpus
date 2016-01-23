@@ -22,6 +22,7 @@ setup(
     packages=find_packages(exclude=['contrib', 'docs', '*test*']),
     install_requires=[
                     'datetime',
+                    'celery',
                     'glob',
                     'json',
                     'logging',
@@ -34,5 +35,5 @@ setup(
                     'yaml'],
     extras_require={
         'test': ['pytest'],
-    },    
+    },
 )
