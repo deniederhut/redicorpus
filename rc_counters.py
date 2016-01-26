@@ -416,7 +416,23 @@ def position_mapper(TOKEN): #rewrite as dict
     file_content = str({-2:negative_two,-1:negative_one,1:positive_one,2:positive_two})
     with open('maps/' + TOKEN.replace(' ','_') + '_posmap.txt','w') as f:
         f.write(file_content)
-    return negative_two[0], negative_one[0], positive_one[0], positive_two[0]
+    if negative_two:
+        negative_two = negative_two[0]
+    else:
+        negative_two = None
+    if negative_one:
+        negative_one = negative_one[0]
+    else:
+        negative_one = None
+    if positive_one:
+        positive_one = positive_one[0]
+    else:
+        positive_one = None
+    if positive_two:
+        positive_two = positive_two[0]
+    else:
+        positive_two = None
+    return negative_two, negative_one, positive_one, positive_two
 
 def top_links():
     from lxml import etree
