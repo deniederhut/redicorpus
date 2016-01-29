@@ -396,17 +396,22 @@ def position_mapper(TOKEN): #rewrite as dict
                     comment = description.text.lower()
                     comment = comment.replace('quot','"')
                     if re.search(TOKEN,comment):
-                        comment = wordpunct_tokenize(comment)
+                        comment = [PorterStemmer().stem(item) for item in wordpunct_tokenize(comment)]
                         try:
-                            ix = comment.index(TOKEN)
+                            if len(TOKEN.split()) > 1:
+                                ix = comment.index(TOKEN.split(' ')[0])
+                                offset = len(TOKEN.split()) - 1
+                            else:
+                                ix = comment.index(TOKEN)
+                                offset = 0
                             if ix > 1:
                                 negative_two.append(comment[ix-2])
                             if ix > 0:
                                 negative_one.append(comment[ix-1])
-                            if len(comment) - ix > 1:
-                                positive_one.append(comment[ix+1])
-                            if len(comment) - ix > 2:
-                                positive_two.append(comment[ix+2])
+                            if (len(comment) - ix) > (1 + offset):
+                                positive_one.append(comment[ix+1+offset])
+                            if (len(comment) - ix) > (2 + offset):
+                                positive_two.append(comment[ix+2+offset])
                         except ValueError:
                             pass
     negative_two = sorted([(negative_two.count(item)/float(len(negative_two)), item) for item in set(negative_two)], reverse = True)
