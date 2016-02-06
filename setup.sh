@@ -17,9 +17,14 @@ sudo pip install -U celery
 wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.0/rabbitmq-server_3.6.0-1_all.deb
 sudo dpkg rabbitmq-server_3.6.0-1_all.deb
 
-# Moving config files
+# Moving files
 ## celery
 sudo cp etc/celery /etc/conf.d/celery
+## mongo
+if [ ! -d /data/db ]; then
+    sudo mkdir -p /data/db
+    sudo chown -R $USER /data/db
+fi
 
 # Starting daemons
 sudo invoke-rc.d rabbitmq-server start
