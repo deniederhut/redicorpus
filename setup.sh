@@ -10,9 +10,11 @@ sudo apt-get update
 sudo apt-get install -y mongodb byobu openssl python
 
 # Install from pip
-sudo pip install -U celery
+sudo pip install -U celery, nltk, pymongo
 
 # Install from downloads
+## nltk
+python etc/nltk_helper.py
 ## rabbit-mq
 wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.0/rabbitmq-server_3.6.0-1_all.deb
 sudo dpkg rabbitmq-server_3.6.0-1_all.deb
