@@ -51,10 +51,11 @@ class DictLike(object):
         self.data = data
 
     def __repr__(self):
-        return ''.format(self.data['_id'], self.data[''])
+        return '{} from {}, with data {}'.format(self.data['_id'], self.data['source'], self.data['raw'])
 
     def __str__(self):
         return str(self.data)
+
 
 class ArrayLike(object):
     """Acts like an array, but has mongo based dict methods"""
@@ -73,24 +74,23 @@ class Stem(StringLike):
     def stemmer(self, data):
         return SnowballStemmer(self.language).stem(data)
 
-class lemma(stringLike):
+
+class Lemma(StringLike):
     """A lemmatized string"""
 
     def __init__(self, data, pos=None):
-        super(lemma, self).__init__()
+        super(Lemma, self).__init__(data, pos)
         self.cooked = self.lemmatize(data)
 
     def lemmatize(self, data):
         return WordNetLemmatizer().lemmatize(data)
 
 
-class comment(dictLike):
+class Comment(dictLike):
     """A single communicative event and metadata"""
 
     def __init__(self):
         pass
-
-
 
     @app.task
     def to_db(self):
