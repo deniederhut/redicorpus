@@ -1,37 +1,87 @@
 #!/usr/bin/env python
 """
-High temporal resultion linguistic corpus
-Built on MongoDB
+High resolution, distributed corpus building, querying, and testing
+
+Built on MongoDB and Celery
 """
 
-initialize db client as c
+from collections import defaultdict
+from nltk import pos_tag, SnowballStemmer, WordNetLemmatizer
+from pymongo import MongoClient
 
-class stringlike(object):
-    """Acts like a string, but contains preprocessed string data"""
+c = MongoClient()
 
+class StringLike(object):
+    """Acts like a string, but contains metadata"""
 
-class dictLike(object):
+    def __init__(self, data, pos=None):
+        assert isinstance(data, str)
+        if not pos:
+            pos = pos_tag([data])
+        self.raw = data
+        self.pos = pos
+        self.language = 'english'
+
+    def __add__(self, x):
+        return str(self.cooked) + str(x)
+
+    def __class__(self):
+        return "stringLike"
+
+    def __len__(self):
+        return len(self.cooked)
+
+    def __repr__(self):
+        return "Cooked : {}, from raw : {}".format(self.cooked, self.raw)
+
+    def set_language(self, language):
+        assert language in ['english', 'spanish']
+        self.language = language
+
+    def __str__(self):
+        return self.cooked
+
+class DictLike(object):
     """Acts like a dict, but has mongo i/o"""
 
+    def __init__(self, data=None):
+        if not data:
+            data = {}
+        assert isinstance(data, dict)
+        self.data = data
 
-class arrayLike(object):
+    def __repr__(self):
+        return ''.format(self.data['_id'], self.data[''])
+
+    def __str__(self):
+        return str(self.data)
+
+class ArrayLike(object):
     """Acts like an array, but has mongo based dict methods"""
-
-
-class stem(stringLike):
-    """A stemmed string"""
 
     def __init__(self):
         pass
 
 
+class Stem(StringLike):
+    """A stemmed string"""
+
+    def __init__(self, data, pos=None):
+        super(Stem, self).__init__(data, pos)
+        self.cooked = self.stemmer(data)
+
+    def stemmer(self, data):
+        return SnowballStemmer(self.language).stem(data)
 
 class lemma(stringLike):
     """A lemmatized string"""
 
-    def __init__(self):
-        pass
+    def __init__(self, data, pos=None):
+        super(lemma, self).__init__()
+        self.cooked = self.lemmatize(data)
 
+    def lemmatize(self, data):
+        return WordNetLemmatizer().lemmatize(data)
 
 
 class comment(dictLike):
@@ -40,14 +90,7 @@ class comment(dictLike):
     def __init__(self):
         pass
 
-    def __repr__(self):
-        pass
 
-    def from_getter(self, data):
-        pass
-
-    def from_db():
-        set instance data equal to db query result
 
     @app.task
     def to_db(self):
