@@ -6,7 +6,7 @@ Built on MongoDB and Celery
 """
 
 from collections import defaultdict
-from nltk import pos_tag, SnowballStemmer, WordNetLemmatizer
+from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo import MongoClient
 
 c = MongoClient()
@@ -26,7 +26,7 @@ class StringLike(object):
         return str(self.cooked) + str(x)
 
     def __class__(self):
-        return "stringLike"
+        return "StringLike"
 
     def __len__(self):
         return len(self.cooked)
@@ -56,12 +56,48 @@ class DictLike(object):
     def __str__(self):
         return str(self.data)
 
+    def count(self):
+        date = self.data['date']
+        for gram_type in (String, Stem, Lemma):
+            data = [gram_type(token) for token in word_tokenize(self.data)]
+            for gram_length in (1,2,3):
+                for gram in ngrams(data, gram_length):
+                    collection = c[self.data['source']][gram_type]
+                    self.update_gram.apply_async(collection, gram, date)
+                    self.update_total.apply_async(collection, gram, date)
+
+    @staticmethod
+    @app.task
+    # TODO insert user names
+    # TODO insert comment _ids
+    def update_gram(collection, gram, date):
+        collection.update_one(
+        {'_id' : gram, 'date' : date,
+        {'$inc' :
+            {'count' : 1}
+        })
+
+    @staticmethod
+    @app.task
+    def update_total(collection, gram, date):
+        collection.update_one(
+        {'_id' : 'TOTAL', 'date' : date},
+        {'$inc' :
+            {'count' : 1}
+        })
 
 class ArrayLike(object):
     """Acts like an array, but has mongo based dict methods"""
 
     def __init__(self):
         pass
+
+
+class String(StringLike):
+    """A string"""
+
+    def __init__(self, data, pos=None):
+        super(Stem, self).__init__(data, pos)
 
 
 class Stem(StringLike):
@@ -86,27 +122,15 @@ class Lemma(StringLike):
         return WordNetLemmatizer().lemmatize(data)
 
 
-class Comment(dictLike):
+class Comment(DictLike):
     """A single communicative event and metadata"""
 
-    def __init__(self):
-        pass
+    def __init__(self, data=None):
+        super(Comment, self).__init__(data)
 
     @app.task
     def to_db(self):
-        insert document
-        if successful:
-            add document to counting queue
-
-    @app.task
-    def count(self, _id):
-        create instance of comment from queue
-        get date
-        for token type:
-            for gram length:
-                for ngram:
-                    update document by ngram and date
-                    update total by date
+        c[self.data['source']]['comment'].insert_one(self.data)
 
 
 class body(arrayLike):
