@@ -53,6 +53,9 @@ class DictLike(object):
         assert isinstance(data, dict)
         self.data = data
 
+    def __class__(self):
+        return "DictLike"
+
     def __repr__(self):
         return '{} from {}, with data {}'.format(self.data['_id'], self.data['source'], self.data['raw'])
 
@@ -93,9 +96,37 @@ class DictLike(object):
 
 
 class ArrayLike(object):
-    """Acts like an array, but has mongo based dict methods"""
+    """Acts like an array, but has mongo based dictionary methods"""
 
-    def __init__(self):
+    def __init__(self, data=None):
+        if not data:
+            self.data = []
+        else:
+            assert isinstance(data, list)
+            self.data = data
+
+    def __add__(self, other):
+        result = []
+        if len(self.data) > len(other):
+            other = other + [0] * (len(self.data) - len(other))
+        elif len(other) > len(self.data):
+            self.data = self.data + [0] * (len(other) - len(self.data))
+        for i in range(0, len(self.data)):
+            result[i] = self.data[i] + other[i]
+        return result
+
+    def __class__(self):
+        return "ArrayLike"
+
+    def __contains__(self, term):
+        pass
+
+    def __getitem__(self, x):
+        if isinstance(x, int):
+            return self.data[x]
+        elif isinstance(x, str):
+
+    def __repr__(self):
         pass
 
 
@@ -105,7 +136,7 @@ class String(StringLike):
     """A string"""
 
     def __init__(self, data, pos=None):
-        super(Stem, self).__init__(data, pos)
+        super(String, self).__init__(data, pos)
 
 
 class Stem(StringLike):
