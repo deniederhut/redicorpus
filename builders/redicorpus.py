@@ -138,24 +138,24 @@ class ArrayLike(object):
     def __class__(self):
         return "ArrayLike"
 
-    def __contains__(self, term):
-        result = self.__getitem__(term)
+    def __contains__(self, key):
+        result = self.__getitem__(key)
         if not result:
             return False
         else:
             return True
 
-    def __getitem__(self, x):
-        if isinstance(x, int):
-            return self.data[x]
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self.data[key]
         else:
             string_type = type(String('a'))
-            if isinstance(x, StringLike):
-                x = x.cooked
-                string_type = type(x)
+            if isinstance(key, StringLike):
+                key = key.cooked
+                string_type = type(key)
             i = c['dictionary'][string_type].find_one(
             {
-                'term' : x
+                'term' : key
             }, {
                 'index' : 1
                 }
@@ -166,28 +166,34 @@ class ArrayLike(object):
         for item in self.data:
             yield item
 
+    def __len__(self):
+        return len(self.data)
+
     def __mul__(self, value):
         return [int(item) * float(value) for item in self.data]
 
     def __repr__(self):
         return 'ArrayLike of length {}'.format(len(self.data))
 
-    def __setitem__(self, x, value):
-        if isinstance(x, int):
-            self.data[x] = value
+    def __setitem__(self, key, value):
+        if isinstance(key, int):
+            self.data[key] = value
         else:
             string_type = type(String('a'))
-            if isinstance(x, StringLike):
-                x = x.cooked
-                string_type = type(x)
+            if isinstance(key, StringLike):
+                key = key.cooked
+                string_type = type(key)
             i = c['dictionary'][string_type].find_one(
             {
-                'term' : x
+                'term' : key
             }, {
                 'index' : 1
                 }
             )['index']
             self.data[i] = value
+
+    def __str__(self):
+        return str(self.data)
 
 
 # Class declarations - StringLike
