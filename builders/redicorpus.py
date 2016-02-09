@@ -11,6 +11,8 @@ from pymongo import MongoClient
 
 c = MongoClient()
 
+# Metaclass declarations
+
 class StringLike(object):
     """Acts like a string, but contains metadata"""
 
@@ -40,6 +42,7 @@ class StringLike(object):
 
     def __str__(self):
         return self.cooked
+
 
 class DictLike(object):
     """Acts like a dict, but has mongo i/o"""
@@ -86,12 +89,15 @@ class DictLike(object):
             {'count' : 1}
         })
 
+
 class ArrayLike(object):
     """Acts like an array, but has mongo based dict methods"""
 
     def __init__(self):
         pass
 
+
+# Class declarations - StringLike
 
 class String(StringLike):
     """A string"""
@@ -122,6 +128,8 @@ class Lemma(StringLike):
         return WordNetLemmatizer().lemmatize(data)
 
 
+# Class declarations - DictLike
+
 class Comment(DictLike):
     """A single communicative event and metadata"""
 
@@ -133,7 +141,9 @@ class Comment(DictLike):
         c[self.data['source']]['comment'].insert_one(self.data)
 
 
-class body(arrayLike):
+# Class declarations - ArrayLike
+
+class body(ArrayLike):
     """All of the frequency counts for a day"""
 
     def __init__(self):
@@ -157,7 +167,8 @@ class body(arrayLike):
     def get_tfidf(self):
         pass
 
-class map(arrayLike):
+
+class map(ArrayLike):
     """Conditional probability map for terms"""
 
     def __init__(self):
@@ -165,6 +176,9 @@ class map(arrayLike):
     def test():
 
     def control():
+
+
+# Module functions
 
 def get_comment():
     """Retrieve comment from db"""
