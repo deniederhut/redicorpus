@@ -75,19 +75,21 @@ class DictLike(object):
     # TODO insert comment _ids
     def update_gram(collection, gram, date):
         collection.update_one(
-        {'_id' : gram, 'date' : date,
-        {'$inc' :
-            {'count' : 1}
-        })
+            {'_id' : gram, 'date' : date,
+            {'$inc' :
+                {'count' : 1}
+            }
+        )
 
     @staticmethod
     @app.task
     def update_total(collection, gram, date):
         collection.update_one(
-        {'_id' : 'TOTAL', 'date' : date},
-        {'$inc' :
-            {'count' : 1}
-        })
+            {'_id' : 'TOTAL', 'date' : date},
+            {'$inc' :
+                {'count' : 1}
+            }
+        )
 
 
 class ArrayLike(object):
