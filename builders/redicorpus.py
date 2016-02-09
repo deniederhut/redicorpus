@@ -31,8 +31,15 @@ class StringLike(object):
     def __class__(self):
         return "StringLike"
 
+    def __iter__(self):
+        for character in self.data:
+            yield character
+
     def __len__(self):
         return len(self.cooked)
+
+    def __mul__(self, x):
+        return self.cooked * x
 
     def __repr__(self):
         return "Cooked : {}, from raw : {}".format(self.cooked, self.raw)
