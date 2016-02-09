@@ -61,11 +61,23 @@ class DictLike(object):
         assert isinstance(data, dict)
         self.data = data
 
+    def __add__(self, x):
+        pass
+
     def __class__(self):
         return "DictLike"
 
+    def __getitem(self, key):
+        return self.data[key]
+
+    def __len__(self):
+        return len(self.data.keys())
+
     def __repr__(self):
         return '{} from {}, with data {}'.format(self.data['_id'], self.data['source'], self.data['raw'])
+
+    def __setitem__(self, key, value):
+        self.data[key] = value
 
     def __str__(self):
         return str(self.data)
