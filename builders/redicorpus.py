@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-High resolution, distributed corpus building, querying, and testing
+High temporal resolution, distributed corpus building, querying,
+and testing
 
 Built on MongoDB and Celery
 """
@@ -119,15 +120,55 @@ class ArrayLike(object):
         return "ArrayLike"
 
     def __contains__(self, term):
-        pass
+        result = self.__getitem__(term)
+        if not result:
+            return False
+        else:
+            return True
 
     def __getitem__(self, x):
         if isinstance(x, int):
             return self.data[x]
-        elif isinstance(x, str):
+        else:
+            string_type = type(String('a'))
+            if isinstance(x, StringLike):
+                x = x.cooked
+                string_type = type(x)
+            i = c['dictionary'][string_type].find_one(
+            {
+                'term' : x
+            }, {
+                'index' : 1
+                }
+            )['index']
+            return self.data[i]
+
+    def __iter__(self):
+        for item in self.data:
+            yield item
+
+    def __mul__(self, value):
+        return [int(item) * float(value) for item in self.data]
 
     def __repr__(self):
-        pass
+        return 'ArrayLike of length {}'.format(len(self.data))
+
+    def __setitem__(self, x, value):
+        if isinstance(x, int):
+            self.data[x] = value
+        else:
+            string_type = type(String('a'))
+            if isinstance(x, StringLike):
+                x = x.cooked
+                string_type = type(x)
+            i = c['dictionary'][string_type].find_one(
+            {
+                'term' : x
+            }, {
+                'index' : 1
+                }
+            )['index']
+            self.data[i] = value
 
 
 # Class declarations - StringLike
@@ -137,6 +178,7 @@ class String(StringLike):
 
     def __init__(self, data, pos=None):
         super(String, self).__init__(data, pos)
+        self.cooked = None
 
 
 class Stem(StringLike):
@@ -168,10 +210,6 @@ class Comment(DictLike):
 
     def __init__(self, data=None):
         super(Comment, self).__init__(data)
-
-    @app.task
-    def to_db(self):
-        c[self.data['source']]['comment'].insert_one(self.data)
 
 
 # Class declarations - ArrayLike
