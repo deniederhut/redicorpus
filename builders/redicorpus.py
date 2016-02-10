@@ -61,9 +61,6 @@ class DictLike(object):
         assert isinstance(data, dict)
         self.data = data
 
-    def __add__(self, x):
-        pass
-
     def __class__(self):
         return "DictLike"
 
@@ -231,7 +228,7 @@ class Lemma(StringLike):
 # Class declarations - DictLike
 
 class Comment(DictLike):
-    """A single communicative event and metadata"""
+    """A single communicative event"""
 
     def __init__(self, data=None):
         super(Comment, self).__init__(data)
@@ -239,7 +236,7 @@ class Comment(DictLike):
 
 # Class declarations - ArrayLike
 
-class body(ArrayLike):
+class Body(ArrayLike):
     """All of the frequency counts for a day"""
 
     def __init__(self):
@@ -264,7 +261,7 @@ class body(ArrayLike):
         pass
 
 
-class map(ArrayLike):
+class Map(ArrayLike):
     """Conditional probability map for terms"""
 
     def __init__(self):
