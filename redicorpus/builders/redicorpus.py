@@ -118,12 +118,8 @@ class DictLike(object):
 class ArrayLike(object):
     """Acts like an array, but has mongo based dictionary methods"""
 
-    def __init__(self, data=None):
-        if not data:
-            self.data = []
-        else:
-            assert isinstance(data, list)
-            self.data = data
+    def __init__(self):
+        self.data =[]
 
     def __add__(self, other):
         result = []
