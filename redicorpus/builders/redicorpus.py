@@ -219,9 +219,9 @@ class Lemma(StringLike):
 
     def __init__(self, data, pos=None):
         super(Lemma, self).__init__(data, pos)
-        self.cooked = self.lemmatize(data)
+        self.cooked = self.lemmer(data)
 
-    def lemmatize(self, data):
+    def lemmer(self, data):
         return WordNetLemmatizer().lemmatize(data)
 
 
