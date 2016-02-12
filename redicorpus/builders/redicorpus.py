@@ -55,11 +55,8 @@ class StringLike(object):
 class DictLike(object):
     """Acts like a dict, but has mongo i/o"""
 
-    def __init__(self, data=None):
-        if not data:
-            data = {}
-        assert isinstance(data, dict)
-        self.data = data
+    def __init__(self):
+        self.data = {}
 
     def __class__(self):
         return "DictLike"
@@ -79,6 +76,12 @@ class DictLike(object):
     def __str__(self):
         return str(self.data)
 
+    def __from_dict(self, data):
+        assert isinstance(data, dict)
+        assert '_id' in data
+        for key in self.data:
+            self.data[key] = data.get(key)
+
     def count(self):
         date = self.data['date']
         for gram_type in (String, Stem, Lemma):
@@ -95,7 +98,7 @@ class DictLike(object):
     # TODO insert comment _ids
     def update_gram(collection, gram, date):
         collection.update_one(
-            {'_id' : gram, 'date' : date,
+            {'_id' : gram, 'date' : date},
             {'$inc' :
                 {'count' : 1}
             }
@@ -247,12 +250,6 @@ class Comment(DictLike):
         }
         if data:
             self.data = self.__from_dict(data)
-
-    def __from_dict(self, data):
-        assert isinstance(data, dict)
-        assert '_id' in data
-        for key in self.data:
-            self.data[key] = data.get(key)
 
 
 # Class declarations - ArrayLike
