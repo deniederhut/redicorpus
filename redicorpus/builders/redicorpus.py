@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-High temporal resolution, out of memory, distributed corpus
+High temporal resolution, out of core, distributed corpus
 building, and querying.
 
 Built on MongoDB and Celery
