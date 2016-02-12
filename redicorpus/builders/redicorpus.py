@@ -231,7 +231,28 @@ class Comment(DictLike):
     """A single communicative event"""
 
     def __init__(self, data=None):
-        super(Comment, self).__init__(data)
+        super(Comment, self).__init__()
+        self.data = {
+            '_id' : None,
+            'permalink' : None,
+            'source' : None,
+            'date' : None,
+            'thread_id' : None,
+            'parent_id' : None,
+            'child_ids' : [],
+            'hrefs' : [],
+            'author' : None,
+            'polarity' : None,
+            'text' : None,
+        }
+        if data:
+            self.data = self.__from_dict(data)
+
+    def __from_dict(self, data):
+        assert isinstance(data, dict)
+        assert '_id' in data
+        for key in self.data:
+            self.data[key] = data.get(key)
 
 
 # Class declarations - ArrayLike
