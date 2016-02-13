@@ -97,21 +97,11 @@ class DictLike(object):
 
     @staticmethod
     @app.task
-    # TODO insert user names
-    # TODO insert comment _ids
+    # TODO insert unique user names
+    # TODO insert document counts
     def update_gram(collection, gram, date):
         collection.update_one(
             {'_id' : gram, 'date' : date},
-            {'$inc' :
-                {'count' : 1}
-            }
-        )
-
-    @staticmethod
-    @app.task
-    def update_total(collection, gram, date):
-        collection.update_one(
-            {'_id' : 'TOTAL', 'date' : date},
             {'$inc' :
                 {'count' : 1}
             }
