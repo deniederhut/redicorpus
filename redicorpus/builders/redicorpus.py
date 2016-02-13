@@ -13,7 +13,7 @@ from pymongo import MongoClient
 
 c = MongoClient()
 
-# Metaclass declarations
+# String classes
 
 class StringLike(object):
     """Acts like a string, but contains metadata"""
@@ -52,6 +52,38 @@ class StringLike(object):
     def __str__(self):
         return self.cooked
 
+
+class String(StringLike):
+    """A string"""
+
+    def __init__(self, data, pos=None):
+        super(String, self).__init__(data, pos)
+        self.cooked = None
+
+
+class Stem(StringLike):
+    """A stemmed string"""
+
+    def __init__(self, data, pos=None):
+        super(Stem, self).__init__(data, pos)
+        self.cooked = self.stemmer(data)
+
+    def stemmer(self, data):
+        return SnowballStemmer(self.language).stem(data)
+
+
+class Lemma(StringLike):
+    """A lemmatized string"""
+
+    def __init__(self, data, pos=None):
+        super(Lemma, self).__init__(data, pos)
+        self.cooked = self.lemmer(data)
+
+    def lemmer(self, data):
+        return WordNetLemmatizer().lemmatize(data)
+
+
+# Dict classes
 
 class DictLike(object):
     """Acts like a dict, but has mongo i/o"""
@@ -107,6 +139,30 @@ class DictLike(object):
             }
         )
 
+
+class Comment(DictLike):
+    """A single communicative event"""
+
+    def __init__(self, data=None):
+        super(Comment, self).__init__()
+        self.data = {
+            '_id' : None,
+            'permalink' : None,
+            'source' : None,
+            'timestamp' : None,
+            'thread_id' : None,
+            'parent_id' : None,
+            'child_ids' : [],
+            'hrefs' : [],
+            'author' : None,
+            'polarity' : None,
+            'text' : None,
+        }
+        if data:
+            self.data = self.__from_dict(data)
+
+
+# Array classes
 
 class ArrayLike(object):
     """Acts like an array, but has mongo based dictionary methods"""
@@ -187,64 +243,6 @@ class ArrayLike(object):
         return str(self.data)
 
 
-# Class declarations - StringLike
-
-class String(StringLike):
-    """A string"""
-
-    def __init__(self, data, pos=None):
-        super(String, self).__init__(data, pos)
-        self.cooked = None
-
-
-class Stem(StringLike):
-    """A stemmed string"""
-
-    def __init__(self, data, pos=None):
-        super(Stem, self).__init__(data, pos)
-        self.cooked = self.stemmer(data)
-
-    def stemmer(self, data):
-        return SnowballStemmer(self.language).stem(data)
-
-
-class Lemma(StringLike):
-    """A lemmatized string"""
-
-    def __init__(self, data, pos=None):
-        super(Lemma, self).__init__(data, pos)
-        self.cooked = self.lemmer(data)
-
-    def lemmer(self, data):
-        return WordNetLemmatizer().lemmatize(data)
-
-
-# Class declarations - DictLike
-
-class Comment(DictLike):
-    """A single communicative event"""
-
-    def __init__(self, data=None):
-        super(Comment, self).__init__()
-        self.data = {
-            '_id' : None,
-            'permalink' : None,
-            'source' : None,
-            'timestamp' : None,
-            'thread_id' : None,
-            'parent_id' : None,
-            'child_ids' : [],
-            'hrefs' : [],
-            'author' : None,
-            'polarity' : None,
-            'text' : None,
-        }
-        if data:
-            self.data = self.__from_dict(data)
-
-
-# Class declarations - ArrayLike
-
 class Body(ArrayLike):
     """All of the frequency counts for a time period"""
 
@@ -307,7 +305,7 @@ class Body(ArrayLike):
 
 
 class Map(ArrayLike):
-    """Conditional probability map for terms"""
+    """Conditional probability map for a single term"""
 
     def __init__(self):
 
