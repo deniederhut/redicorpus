@@ -56,8 +56,10 @@ class StringLike(object):
 class DictLike(object):
     """Acts like a dict, but has mongo i/o"""
 
-    def __init__(self):
+    def __init__(self, data=None):
         self.data = {}
+        if data:
+            self.data = data
 
     def __class__(self):
         return "DictLike"
@@ -119,8 +121,10 @@ class DictLike(object):
 class ArrayLike(object):
     """Acts like an array, but has mongo based dictionary methods"""
 
-    def __init__(self):
+    def __init__(self, data=None):
         self.data =[]
+        if data:
+            self.data = data
 
     def __add__(self, other):
         result = []
