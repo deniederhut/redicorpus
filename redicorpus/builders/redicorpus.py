@@ -6,6 +6,7 @@ building, and querying.
 Built on MongoDB and Celery
 """
 
+from datetime import datetime, timedelta
 from collections import defaultdict
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo import MongoClient
@@ -235,7 +236,7 @@ class Comment(DictLike):
             '_id' : None,
             'permalink' : None,
             'source' : None,
-            'date' : None,
+            'timestamp' : None,
             'thread_id' : None,
             'parent_id' : None,
             'child_ids' : [],
@@ -251,28 +252,64 @@ class Comment(DictLike):
 # Class declarations - ArrayLike
 
 class Body(ArrayLike):
-    """All of the frequency counts for a day"""
+    """All of the frequency counts for a time period"""
 
-    def __init__(self):
-        pass
+    def __init__(self, source, string_type, gram_length, time_stamp, time_delta=timedelta(1)):
+        assert source in c.database_names()
+        assert string_type in ('string', 'stem', 'lemma')
+        assert isinstance(time_stamp, datetime)
+        assert isinstance(time_delta, timedelta)
 
-    def __sum__():
-        pass
+        collection = c[source][string_type]
+        if time_delta.seconds: #if resolution < day
+            # result = self.__catch_body()
+            raise BaseException('Resolution not supported')
+        else:
+            result = self.__from_db(collection, gram_length, time_stamp, time_delta)
+        self.data = result['count']
+        self.documents = result['documents']
+        self.users = result['users']
 
-    def __index__():
-        pass
+    def __catch_body(self, source, string_type, time_stamp, time_delta):
+        # initialize result
+        for document in c[source]['comments'].find({
+            'datetime' : {
+                '$gt' : time_stamp, '$lt' : time_stamp + time_delta
+        }}):
+            comment = Comment(document)
+            # count comment
+        # return result
 
-    def __repr__():
-        pass
+    def __from_db(self, collection, time_stamp, time_delta):
+        result = {
+            'count' : ArrayLike(),
+            'documents' : ArrayLike(),
+            'users' : ArrayLike()
+        }
+        for document in collection.find({
+            '_id' :
+                {'$gt' : time_stamp, '$lt' : time_stamp + time_delta
+        }}):
+            result['count'] += ArrayLike(document['count'])
+            result['document'] += ArrayLike(document['document'])
+            result['users'] += ArrayLike(document['users'])
+        return result
 
-    def from_db(self):
-        set instance data equal to db query result
+    def activation(self):
+        total_users = sum(self.users) ** -1
+        return [count * total_users for count in self.users]
 
-    def get_activation(self):
-        pass
+    def count(self):
+        return self.data
 
-    def get_tfidf(self):
-        pass
+    def tfidf(self):
+        result = []
+        for count, document in zip (self.count(), self.tfidf):
+            try:
+                result.append(count / document)
+            except ZeroDivisionError:
+                result.append(0)
+        return result
 
 
 class Map(ArrayLike):
