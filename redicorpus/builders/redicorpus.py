@@ -3,7 +3,7 @@
 High temporal resolution, out of core, distributed corpus
 building, and querying.
 
-Built on MongoDB and Celery
+Built on MongoDB, Celery, and NLTK
 """
 
 from datetime import datetime, timedelta
