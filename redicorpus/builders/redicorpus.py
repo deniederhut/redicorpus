@@ -45,12 +45,12 @@ class StringLike(object):
     def __repr__(self):
         return "Cooked : {}, from raw : {}".format(self.cooked, self.raw)
 
+    def __str__(self):
+        return self.cooked
+
     def set_language(self, language):
         assert language in ['english', 'spanish']
         self.language = language
-
-    def __str__(self):
-        return self.cooked
 
 
 class String(StringLike):
