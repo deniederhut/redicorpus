@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from celery import Celery
 
 app = Celery('redicorpus',
-             broker='mongodb://localhost:27017/celery',
+             broker='amqp://',
              include=['redicorpus.getters.askreddit','redicorpus.builders.redicorpus'])
 
 # Optional configuration, see the application user guide.
