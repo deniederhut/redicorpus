@@ -77,7 +77,7 @@ class Stem(StringLike):
         self.cooked = self.stemmer(data)
 
     def stemmer(self, data):
-        return SnowballStemmer(self.language).stem(data)
+        return SnowballStemmer('english').stem(data)
 
 
 class Lemma(StringLike):
