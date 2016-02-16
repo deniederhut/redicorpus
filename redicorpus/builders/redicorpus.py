@@ -19,13 +19,12 @@ c = MongoClient()
 class StringLike(object):
     """Acts like a string, but contains metadata"""
 
-    def __init__(self, data, pos=None):
-        assert isinstance(data, str)
-        if not pos:
-            pos = pos_tag([data])
-        self.raw = data
-        self.pos = pos
-        self.language = 'english'
+    def __init__(self, data=None, pos=None):
+        if data:
+            if isinstance(data, str):
+                self.__from_string__(data, pos)
+            elif isinstance(data, tuple):
+                self.__from_tuple__(data)
 
     def __add__(self, x):
         return str(self.cooked) + str(x)
@@ -49,9 +48,18 @@ class StringLike(object):
     def __str__(self):
         return self.cooked
 
-    def set_language(self, language):
-        assert language in ['english', 'spanish']
-        self.language = language
+    def __from_string__(self, data, pos):
+        self.raw = data
+        if not pos:
+            pos = pos_tag([data])[0][1]
+        self.pos = pos
+        self.str_type = None
+
+    def __from_tuple__(self, data):
+        self.raw, self.cooked, self.pos, self.str_type = data
+
+    def __to_tuple__(self):
+        return self.cooked, self.raw, self.pos, self.str_type
 
 
 class String(StringLike):
