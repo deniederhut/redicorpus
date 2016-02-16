@@ -2,6 +2,8 @@ redicorpus
 ==========
 the python library for real-time corpus building and querying
 
+# Warning - this build is no longer maintained
+
 ## contents
 
 * setup.sh - appends variables to ~/.bashrc and job to crontab
@@ -39,12 +41,12 @@ redicorpus/
 ~~~
 redicorpus/
 
-  context/  
+  context/
     vonnegut.txt
 
   maps/
-    foma_wordmap.txt  
-    boko_maru_posmap.txt    
+    foma_wordmap.txt
+    boko_maru_posmap.txt
     busi_busi_busi_commap.txt
 
   sentiment/
@@ -52,4 +54,4 @@ redicorpus/
 
   trackers/
     so_it_goe.csv
-~~~  
+~~~
