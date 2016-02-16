@@ -69,6 +69,7 @@ class String(StringLike):
         super(String, self).__init__(data, pos)
         self.cooked = self.raw
 
+
 class Stem(StringLike):
     """A stemmed string"""
 
@@ -100,6 +101,7 @@ class DictLike(object):
         self.data = {}
         if data:
             self.data = data
+        self.n_list = [1, 2, 3]
 
     def __class__(self):
         return "DictLike"
@@ -111,7 +113,7 @@ class DictLike(object):
         return len(self.data.keys())
 
     def __repr__(self):
-        return '{} from {}, with data {}'.format(self.data['_id'], self.data['source'], self.data['raw'])
+        return '{} from {}, with data {}'.format(self.data['_id'], self.data['source'], self.data['string'])
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -119,59 +121,55 @@ class DictLike(object):
     def __str__(self):
         return str(self.data)
 
-    def __from_dict(self, data):
+    def __from_dict__(self, data):
         assert isinstance(data, dict)
         assert '_id' in data
         for key in self.data:
             self.data[key] = data.get(key)
 
-    def count(self):
-        # TODO update this to match call from Map
-        date = self.data['date']
-        for gram_type in (String, Stem, Lemma):
-            data = [gram_type(token) for token in word_tokenize(self.data)]
-            for gram_length in (1,2,3):
-                for gram in ngrams(data, gram_length):
-                    collection = c[self.data['source']][gram_type]
-                    self.update_gram.apply_async(collection, gram, date)
-                    self.update_total.apply_async(collection, gram, date)
-
-    def split(self):
-        pass
+    def __to_dict__(self):
+        return self.data
 
     @staticmethod
+    def tokenize(string, str_type):
+        return [str_type(token, pos) for token,pos in pos_tag(word_tokenize(string))]
+
     @app.task
-    # TODO insert unique user names
-    # TODO insert document counts
-    def update_gram(collection, gram, date):
+    def insert(self):
+        for n in self.n_list:
+            for str_type in StringLike.__subclasses__():
+                for gram in ngrams(self[str_type], n):
+                    ix = c['dictionary'][str_type].find_one(
+                    { 'term' : gram }, { 'index' : 1 })['index']
+                    collection = c[self['source']][str_type]
+                    self.__update_body__(collection, ix)
+
+    def __update_body__(collection, ix):
+        # TODO covert to array $slice update
         collection.update_one(
-            {'_id' : gram, 'date' : date},
-            {'$inc' :
-                {'count' : 1}
-            }
-        )
+            {
+                '_id' : self['date']
+            },
+            {
+                '$inc' :
+                    { 'count' : 1, 'total' : 1 },
+                '$addToSet' : {
+                    'users' : self['user'],
+                    'documents' : self['_id']
+                }
+            },
+            upsert=True)
 
 
 class Comment(DictLike):
     """A single communicative event"""
 
-    def __init__(self, data=None):
+    def __init__(self, data):
         super(Comment, self).__init__()
-        self.data = {
-            '_id' : None,
-            'permalink' : None,
-            'source' : None,
-            'timestamp' : None,
-            'thread_id' : None,
-            'parent_id' : None,
-            'child_ids' : [],
-            'hrefs' : [],
-            'author' : None,
-            'polarity' : None,
-            'text' : None,
-        }
-        if data:
+        if isinstance(data, dict):
             self.data = self.__from_dict(data)
+        for str_type in StringLike.__subclasses__():
+            self[str_type] = self.tokenize(self['raw'], str_type)
 
 
 # Array classes
