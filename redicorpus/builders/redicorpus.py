@@ -6,7 +6,7 @@ building, and querying.
 Built on MongoDB, Celery, and NLTK
 """
 
-from ../celery_callable import app
+from redicorpus.celery import app
 from datetime import datetime, timedelta
 from collections import defaultdict
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
@@ -378,22 +378,25 @@ class Map(ArrayLike):
 
 def get_comment():
     """Retrieve comment from db"""
-    initialize comment object
-    return object with data
+    pass
+    # initialize comment object
+    # return object with data
 
 def get_body():
     """Retrieve counts by date and type"""
-    initialize body object
-    return object with data
+    pass
+    # initialize body object
+    # return object with data
 
 def get_map():
     """Retrieve pre-computed map"""
-    initialize map object
-    if object in db:
-        return object with data
-    else:
-        build map
-        return map
+    pass
+    # initialize map object
+    # if object in db:
+    #     return object with data
+    # else:
+    #     build map
+    #     return map
 
 def zipf_test(x, y=None):
     """Conduct one-way or two-way Zipf test on ArrayLike objects"""

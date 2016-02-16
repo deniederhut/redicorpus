@@ -13,12 +13,12 @@ import logging
 import os
 from pymongo import MongoClient
 import re
-import redicorpus.redicorpus as rc
+from redicorpus.builders import redicorpus as rc
 import requests
 import time
 import yaml
 
-logging.basicConfig(filename = RCDIR + '/etc/askreddit.log', level = logging.INFO, format = '%(asctime)s %(message)s')
+RCDIR = os.getenv('HOME')
 
 def authorize():
     """Oauth for reddit.com"""
@@ -46,7 +46,7 @@ def get_listing(date, depth):
             'User-Agent' : user_agent, 'Authorization' : authorization}).content)
         time.sleep(1)
         for child in listing['data']['children']:
-            mongo.askreddit.listings.insert({'_id' = child['data']['id']})
+            mongo.askreddit.listings.insert({'_id' : child['data']['id']})
 
 def get_page(id36, comment_id=None):
     """Retrieve comment page by id"""
@@ -55,7 +55,7 @@ def get_page(id36, comment_id=None):
     if comment != None:
         url += '&comment=' + comment
     r.status_code = 999
-    while r.status_code != 200
+    while r.status_code != 200:
         r = requests.get(url,
             headers = {'User-Agent' : user_agent, 'Authorization' : authorization})
         if r.status_code == 200:
@@ -72,7 +72,7 @@ def insert_comment(item):
         links.append(match.group('link'))
     comment = rc.comment({
     _id : item['id'],
-    source : 'askreddit'
+    source : 'askreddit',
     date : datetime.datetime.fromtimestamp(item['created_utc']),
     thread_id : re.search(r'[a-zA-Z0-9]+$',item['link_id']).group(),
     parent_id : re.search(r'[a-zA-Z0-9]+$',item['parent_id']).group(),
