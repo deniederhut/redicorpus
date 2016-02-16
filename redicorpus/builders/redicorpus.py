@@ -34,7 +34,7 @@ class StringLike(object):
         return "StringLike"
 
     def __iter__(self):
-        for character in self.data:
+        for character in self.cooked:
             yield character
 
     def __len__(self):
@@ -59,8 +59,7 @@ class String(StringLike):
 
     def __init__(self, data, pos=None):
         super(String, self).__init__(data, pos)
-        self.cooked = None
-
+        self.cooked = self.raw
 
 class Stem(StringLike):
     """A stemmed string"""
