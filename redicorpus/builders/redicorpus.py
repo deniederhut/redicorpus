@@ -118,6 +118,7 @@ class DictLike(object):
             self.data[key] = data.get(key)
 
     def count(self):
+        # TODO update this to match call from Map
         date = self.data['date']
         for gram_type in (String, Stem, Lemma):
             data = [gram_type(token) for token in word_tokenize(self.data)]
@@ -126,6 +127,9 @@ class DictLike(object):
                     collection = c[self.data['source']][gram_type]
                     self.update_gram.apply_async(collection, gram, date)
                     self.update_total.apply_async(collection, gram, date)
+
+    def split(self):
+        pass
 
     @staticmethod
     @app.task
@@ -307,11 +311,66 @@ class Body(ArrayLike):
 class Map(ArrayLike):
     """Conditional probability map for a single term"""
 
-    def __init__(self):
+    def __init__(self, term, source, data=None, position=0, time_stamp=None, time_delta=None):
+        super(Map, self).__init__()
+        assert isinstance(term, StringLike)
+        assert source in c.database_names()
 
-    def test():
+        self.term = term
+        self.time_stamp = time_stamp
+        self.time_delta = time_delta
+        self.position = position
+        self.collection = c[source]['maps']
 
-    def control():
+        if data:
+            self.__from_dict(data)
+        if not data:
+            if time_stamp:
+                try:
+                    self.__from_maps(term, position, time_stamp, time_delta)
+                except IndexError:
+                    self.__from_comments()
+            else:
+                self.__from_comments()
+
+    def __from_maps(self, term, position, time_stamp, time_delta):
+        try:
+            self.__from_dict(self.collection.find_one({
+            'term' : term,
+            'position' : position,
+            'time_stamp' : time_stamp,
+            'time_delta' : time_delta
+            }))
+        except:
+            raise IndexError("Document does not exist in collection")
+
+    def __from_comments(self):
+        # TODO support for ngrams
+        for document in self.collection.find({
+        'date' : {
+            '$gt' : self.time_stamp,
+            '$lt' : self.time_stamp + self.time_delta
+            }
+        }, {
+        type(term) : 1
+        }):
+            array = Comment(document).tokenize(type(term))
+            if position:
+                ix = array.index(term) + position
+                try:
+                    self[array[ix]] += 1
+                except IndexError:
+                    pass
+            else:
+                array.remove(term)
+                for gram in array:
+                    self[gram] += 1
+
+    def __from_dict(self, data):
+        self.data = data[type(term)]
+        self.time_stamp = data['time_stamp']
+        self.time_delta = data['time_delta']
+        self.position = data['position']
 
 
 # Module functions
@@ -334,3 +393,7 @@ def get_map():
     else:
         build map
         return map
+
+def zipf_test(x, y=None):
+    """Conduct one-way or two-way Zipf test on ArrayLike objects"""
+    pass
