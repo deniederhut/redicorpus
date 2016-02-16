@@ -6,13 +6,12 @@ building, and querying.
 Built on MongoDB, Celery, and NLTK
 """
 
-from redicorpus.celery import app
 from datetime import datetime, timedelta
 from collections import defaultdict
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo import MongoClient
-
-c = MongoClient()
+from redicorpus.builders import c
+from redicorpus.celery import app
 
 # String classes
 
