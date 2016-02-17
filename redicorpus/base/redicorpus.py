@@ -127,6 +127,7 @@ class DictLike(object):
     def __to_dict__(self):
         return self.data
 
+    @app.task
     def tokenize(self, str_type):
         return [str_type(token, pos) for token,pos in pos_tag(word_tokenize(self['raw'].lower()))]
 
@@ -165,7 +166,7 @@ class Comment(DictLike):
         if isinstance(data, dict):
             self.__from_dict__(data)
         for str_type in StringLike.__subclasses__():
-            self[str_type] = self.tokenize(str_type)
+            self[str_type] = self.tokenize.apply(str_type).result
 
 
 # Array classes
