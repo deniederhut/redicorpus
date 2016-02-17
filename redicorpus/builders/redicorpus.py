@@ -7,11 +7,9 @@ Built on MongoDB, Celery, and NLTK
 """
 
 from datetime import datetime, timedelta
-from collections import defaultdict
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
-from pymongo import MongoClient
-from redicorpus.builders import c
-from redicorpus.celery import app
+from redicorpus import c, app
+
 
 # String classes
 

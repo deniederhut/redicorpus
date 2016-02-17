@@ -6,7 +6,12 @@ from celery import Celery
 
 app = Celery('redicorpus',
              broker='amqp://',
-             include=['redicorpus.getters.askreddit','redicorpus.builders.redicorpus'])
+             backend='rpc://',
+             include=[
+                 'redicorpus',
+                 'test'
+                 ]
+             )
 
 # Optional configuration, see the application user guide.
 app.conf.update(
