@@ -8,7 +8,8 @@ app = Celery('redicorpus',
              broker='amqp://',
              backend='rpc://',
              include=[
-                 'redicorpus',
+                'redicorpus',
+                 'redicorpus.base.redicorpus',
                  'test'
                  ]
              )
