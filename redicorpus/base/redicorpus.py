@@ -103,14 +103,14 @@ class DictLike(object):
     def __class__(self):
         return "DictLike"
 
-    def __getitem(self, key):
+    def __getitem__(self, key):
         return self.data[key]
 
     def __len__(self):
         return len(self.data.keys())
 
     def __repr__(self):
-        return '{} from {}, with data {}'.format(self.data['_id'], self.data['source'], self.data['string'])
+        return '{} from {}, with data:\n\n {}'.format(type(self), self['source'], self['raw'])
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -121,15 +121,14 @@ class DictLike(object):
     def __from_dict__(self, data):
         assert isinstance(data, dict)
         assert '_id' in data
-        for key in self.data:
+        for key in data:
             self.data[key] = data.get(key)
 
     def __to_dict__(self):
         return self.data
 
-    @staticmethod
-    def tokenize(string, str_type):
-        return [str_type(token, pos) for token,pos in pos_tag(word_tokenize(string))]
+    def tokenize(self, str_type):
+        return [str_type(token, pos) for token,pos in pos_tag(word_tokenize(self['raw'].lower()))]
 
     @app.task
     def insert(self):
@@ -164,9 +163,9 @@ class Comment(DictLike):
     def __init__(self, data):
         super(Comment, self).__init__()
         if isinstance(data, dict):
-            self.data = self.__from_dict(data)
+            self.__from_dict__(data)
         for str_type in StringLike.__subclasses__():
-            self[str_type] = self.tokenize(self['raw'], str_type)
+            self[str_type] = self.tokenize(str_type)
 
 
 # Array classes
