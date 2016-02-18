@@ -2,6 +2,7 @@
 
 import json
 import pytest
+from redicorpus import c
 from redicorpus.base import redicorpus as rc
 import time
 
@@ -19,3 +20,6 @@ def test_comment():
     assert len(comment)
     assert comment['_id'] == 'd024gzv'
     r = comment.insert()
+
+for collection in c['test'].collection_names():
+    c['test'].drop_collection(collection)

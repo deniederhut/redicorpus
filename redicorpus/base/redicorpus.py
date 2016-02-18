@@ -167,7 +167,7 @@ class Comment(DictLike):
         pos = tuple(string_like.__to_tuple__()[2] for string_like in gram)
         collection.update_one(
             {
-                '_id' : self['date'],
+                'date' : self['date'],
                 'term' : term,
                 'raw' : raw,
                 'pos' : pos,
