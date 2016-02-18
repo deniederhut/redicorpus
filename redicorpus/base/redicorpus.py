@@ -7,6 +7,7 @@ Built on MongoDB, Celery, and NLTK
 """
 
 from celery.contrib.methods import task_method
+from copy import deepcopy
 from datetime import datetime, timedelta
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from redicorpus import c, app
@@ -189,7 +190,15 @@ class Comment(DictLike):
             },
             upsert=True)
 
+    def __update_source__(self):
+        collection = c[self['source']][type(self).__name__]
+        document = deepcopy(self.data)
+        for str_type in self.str_classes:
+            document[str_type.__name__] = [string_like.__to_tuple__() for string_like in document[str_type.__name__]]
+        collection.insert_one(document)
+
     def insert(self):
+        self.__update_source__()
         for n in self.n_list:
             for str_type in self.str_classes:
                 for gram in ngrams(self[str_type.__name__], n):
