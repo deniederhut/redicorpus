@@ -6,7 +6,6 @@ building, and querying.
 Built on MongoDB, Celery, and NLTK
 """
 
-from celery.contrib.methods import task_method
 from copy import deepcopy
 from datetime import datetime, timedelta
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
