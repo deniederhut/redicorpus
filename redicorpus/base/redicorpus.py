@@ -67,6 +67,9 @@ class String(StringLike):
         super(String, self).__init__(data, pos)
         self.cooked = self.raw
 
+    def __class__(self):
+        return "String"
+
 
 class Stem(StringLike):
     """A stemmed string"""
@@ -74,6 +77,9 @@ class Stem(StringLike):
     def __init__(self, data, pos=None):
         super(Stem, self).__init__(data, pos)
         self.cooked = self.stemmer(data)
+
+    def __class__(self):
+        return "Stem"
 
     def stemmer(self, data):
         return SnowballStemmer('english').stem(data)
@@ -86,6 +92,9 @@ class Lemma(StringLike):
         super(Lemma, self).__init__(data, pos)
         self.cooked = self.lemmer(data)
 
+    def __class__(self):
+        return "Lemma"
+
     def lemmer(self, data):
         return WordNetLemmatizer().lemmatize(data)
 
@@ -95,11 +104,12 @@ class Lemma(StringLike):
 class DictLike(object):
     """Acts like a dict, but has mongo i/o"""
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, n_list=[1,2,3]):
         self.data = {}
         if data:
             self.data = data
-        self.n_list = [1, 2, 3]
+        self.n_list = n_list
+        self.str_classes = StringLike.__subclasses__()
 
     def __class__(self):
         return "DictLike"
@@ -111,7 +121,7 @@ class DictLike(object):
         return len(self.data.keys())
 
     def __repr__(self):
-        return '{} from {}, with data:\n\n {}'.format(type(self), self['source'], self['raw'])
+        return '{} from {}, with data:\n\n {}'.format(self.__class__(), self['source'], self['raw'])
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -128,16 +138,12 @@ class DictLike(object):
     def __to_dict__(self):
         return self.data
 
-    @app.task(name='redicorpus.base.redicorpus.tokenize')
-    def tokenize(self, str_type):
-        return [str_type(token, pos) for token,pos in pos_tag(word_tokenize(self['raw'].lower()))]
-
     # @app.task(filter=task_method, name='redicorpus.base.redicorpus.insert')
     def insert(self):
         for n in self.n_list:
-            for str_type in StringLike.__subclasses__():
-                for gram in ngrams(self[str_type], n):
-                    collection = c[self['source']][str_type]
+            for str_type in self.str_classes:
+                for gram in ngrams(self[str_type.__name__], n):
+                    collection = c[self['source']][str_type.__name__]
                     self.__update_body__(collection, gram, n)
 
     def __update_body__(self, collection, gram, n):
@@ -171,8 +177,11 @@ class Comment(DictLike):
         super(Comment, self).__init__()
         if isinstance(data, dict):
             self.__from_dict__(data)
-        for str_type in StringLike.__subclasses__():
-            self[str_type] = self.tokenize.apply(str_type).result
+        for str_type in self.str_classes:
+            self[str_type.__name__] = tokenize.apply(args=[self['raw'], str_type]).result
+
+    def __class__(self):
+        return "Comment"
 
 
 # Array classes
@@ -383,6 +392,10 @@ class Map(ArrayLike):
 
 
 # Module functions
+
+@app.task(name='redicorpus.base.redicorpus.tokenize')
+def tokenize(string, str_type):
+    return [str_type(token, pos) for token, pos in pos_tag(word_tokenize(string.lower()))]
 
 def get_comment():
     """Retrieve comment from db"""

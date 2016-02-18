@@ -14,7 +14,8 @@ def test_string():
 def test_comment():
     with open('data/comment.json', 'r') as f:
         data = json.load(f)
-    obj = rc.Comment(data)
-    assert len(obj) == 11
-    assert obj['_id'] == 'd024gzv'
-    r = obj.insert()
+    comment = rc.Comment(data)
+    assert isinstance(comment, rc.DictLike)
+    assert len(comment)
+    assert comment['_id'] == 'd024gzv'
+    r = comment.insert()
