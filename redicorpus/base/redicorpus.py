@@ -162,10 +162,15 @@ class Comment(DictLike):
         return "Comment"
 
     def __update_body__(self, collection, gram, n):
+        raw = tuple(string_like.__to_tuple__()[0] for string_like in gram)
+        term = tuple(string_like.__to_tuple__()[1] for string_like in gram)
+        pos = tuple(string_like.__to_tuple__()[2] for string_like in gram)
         collection.update_one(
             {
                 '_id' : self['date'],
-                'term' : gram,
+                'term' : term,
+                'raw' : raw,
+                'pos' : pos,
                 'n' : n
             },
             {
