@@ -3,6 +3,7 @@
 import json
 import pytest
 from redicorpus.base import redicorpus as rc
+import time
 
 def test_string():
     obj = rc.String('try')
@@ -16,3 +17,4 @@ def test_comment():
     obj = rc.Comment(data)
     assert len(obj) == 11
     assert obj['_id'] == 'd024gzv'
+    r = obj.insert()

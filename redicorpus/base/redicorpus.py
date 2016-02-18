@@ -6,6 +6,7 @@ building, and querying.
 Built on MongoDB, Celery, and NLTK
 """
 
+from celery.contrib.methods import task_method
 from datetime import datetime, timedelta
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from redicorpus import c, app
@@ -127,32 +128,37 @@ class DictLike(object):
     def __to_dict__(self):
         return self.data
 
-    @app.task
+    @app.task(name='redicorpus.base.redicorpus.tokenize')
     def tokenize(self, str_type):
         return [str_type(token, pos) for token,pos in pos_tag(word_tokenize(self['raw'].lower()))]
 
-    @app.task
+    # @app.task(filter=task_method, name='redicorpus.base.redicorpus.insert')
     def insert(self):
         for n in self.n_list:
             for str_type in StringLike.__subclasses__():
                 for gram in ngrams(self[str_type], n):
-                    ix = c['dictionary'][str_type].find_one(
-                    { 'term' : gram }, { 'index' : 1 })['index']
                     collection = c[self['source']][str_type]
-                    self.__update_body__(collection, ix)
+                    self.__update_body__(collection, gram, n)
 
-    def __update_body__(collection, ix):
-        # TODO covert to array $slice update
+    def __update_body__(self, collection, gram, n):
         collection.update_one(
             {
-                '_id' : self['date']
+                '_id' : self['date'],
+                'term' : gram,
+                'n' : n
             },
             {
-                '$inc' :
-                    { 'count' : 1, 'total' : 1 },
+                '$inc' : {
+                    'count' : 1, 'total' : 1
+                },
                 '$addToSet' : {
                     'users' : self['user'],
                     'documents' : self['_id']
+                },
+                '$push' : {
+                    'polarity' : self.get('polarity'),
+                    'controversiality' : self.get('controversiality'),
+                    'emotion' : self.get('emotion')
                 }
             },
             upsert=True)

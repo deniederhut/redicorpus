@@ -17,6 +17,7 @@ app = Celery('redicorpus',
 # Optional configuration, see the application user guide.
 app.conf.update(
     CELERY_TASK_RESULT_EXPIRES=3600,
+    CELERY_ACCEPT_CONTENT = ['pickle']
 )
 
 if __name__ == '__main__':
