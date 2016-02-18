@@ -115,7 +115,7 @@ class DictLike(object):
         return "DictLike"
 
     def __getitem__(self, key):
-        return self.data[key]
+        return self.data.get(key)
 
     def __len__(self):
         return len(self.data.keys())
@@ -138,13 +138,28 @@ class DictLike(object):
     def __to_dict__(self):
         return self.data
 
-    # @app.task(filter=task_method, name='redicorpus.base.redicorpus.insert')
-    def insert(self):
-        for n in self.n_list:
-            for str_type in self.str_classes:
-                for gram in ngrams(self[str_type.__name__], n):
-                    collection = c[self['source']][str_type.__name__]
-                    self.__update_body__(collection, gram, n)
+    def keys(self):
+        return self.data.keys()
+
+    def items(self):
+        return self.data.items()
+
+    def values(self):
+        return self.data.values()
+
+
+class Comment(DictLike):
+    """A single communicative event"""
+
+    def __init__(self, data):
+        super(Comment, self).__init__()
+        if isinstance(data, dict):
+            self.__from_dict__(data)
+        for str_type in self.str_classes:
+            self[str_type.__name__] = tokenize.apply(args=[self['raw'], str_type]).result
+
+    def __class__(self):
+        return "Comment"
 
     def __update_body__(self, collection, gram, n):
         collection.update_one(
@@ -162,26 +177,19 @@ class DictLike(object):
                     'documents' : self['_id']
                 },
                 '$push' : {
-                    'polarity' : self.get('polarity'),
-                    'controversiality' : self.get('controversiality'),
-                    'emotion' : self.get('emotion')
+                    'polarity' : self['polarity'],
+                    'controversiality' : self['controversiality'],
+                    'emotion' : self['emotion']
                 }
             },
             upsert=True)
 
-
-class Comment(DictLike):
-    """A single communicative event"""
-
-    def __init__(self, data):
-        super(Comment, self).__init__()
-        if isinstance(data, dict):
-            self.__from_dict__(data)
-        for str_type in self.str_classes:
-            self[str_type.__name__] = tokenize.apply(args=[self['raw'], str_type]).result
-
-    def __class__(self):
-        return "Comment"
+    def insert(self):
+        for n in self.n_list:
+            for str_type in self.str_classes:
+                for gram in ngrams(self[str_type.__name__], n):
+                    collection = c[self['source']][str_type.__name__]
+                    self.__update_body__(collection, gram, n)
 
 
 # Array classes
