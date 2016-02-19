@@ -243,14 +243,15 @@ class ArrayLike(object):
             self.data = data
 
     def __add__(self, other):
-        result = []
-        if len(self.data) > len(other):
-            other = other + [0] * (len(self.data) - len(other))
-        elif len(other) > len(self.data):
-            self.data = self.data + [0] * (len(other) - len(self.data))
-        for i in range(0, len(self.data)):
-            result[i] = self.data[i] + other[i]
-        return result
+        if isinstance(other, int) | isinstance(other, float):
+            self.data = [item + other for item in self.data]
+            return self.data
+        elif isinstance(other, ArrayLike):
+            self.__forcelen__(other)
+            result = []
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] + other.data[i])
+            return result
 
     def __class__(self):
         return "ArrayLike"
@@ -261,6 +262,12 @@ class ArrayLike(object):
             return False
         else:
             return True
+
+    def __forcelen__(self, other):
+        if len(self) > len(other):
+            other.data = other.data + [0] * (len(self) - len(other))
+        elif len(other) > len(self.data):
+            self.data = self.data + [0] * (len(other) - len(self.data))
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -286,8 +293,16 @@ class ArrayLike(object):
     def __len__(self):
         return len(self.data)
 
-    def __mul__(self, value):
-        return [int(item) * float(value) for item in self.data]
+    def __mul__(self, other):
+        if isinstance(other, float) | isinstance(other, int):
+            self.data = [item * other for item in self.data]
+            return self.data
+        elif isinstance(value, ArrayLike):
+            self.__forcelen__(other)
+            result = []
+            for i in range(0, len(self.data)):
+                result.append(self.data[i] * other.data[i])
+            return result 
 
     def __repr__(self):
         return 'ArrayLike of length {}'.format(len(self.data))
