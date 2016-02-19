@@ -161,33 +161,60 @@ class Comment(DictLike):
     def __class__(self):
         return "Comment"
 
-    def __update_body__(self, collection, gram, n):
+    def __update_body__(self, gram, n):
+        collection = c[self['source']][str_type.__name__]
         raw = tuple(string_like.__to_tuple__()[0] for string_like in gram)
         term = tuple(string_like.__to_tuple__()[1] for string_like in gram)
         pos = tuple(string_like.__to_tuple__()[2] for string_like in gram)
         collection.update_one(
             {
-                'date' : self['date'],
-                'term' : term,
-                'raw' : raw,
-                'pos' : pos,
-                'n' : n
+            'date' : self['date'],
+            'term' : term,
+            'raw' : raw,
+            'pos' : pos,
+            'n' : n
+            }, {
+            '$inc' : {
+                'count' : 1, 'total' : 1
             },
-            {
-                '$inc' : {
-                    'count' : 1, 'total' : 1
-                },
-                '$addToSet' : {
-                    'users' : self['user'],
-                    'documents' : self['_id']
-                },
-                '$push' : {
-                    'polarity' : self['polarity'],
-                    'controversiality' : self['controversiality'],
-                    'emotion' : self['emotion']
-                }
+            '$addToSet' : {
+                'users' : self['user'],
+                'documents' : self['_id']
+            },
+            '$push' : {
+                'polarity' : self['polarity'],
+                'controversiality' : self['controversiality'],
+                'emotion' : self['emotion']
+            }
             },
             upsert=True)
+
+    def __update_dictionary__(self, gram, n):
+        collection = c[str(n) + 'gram'][gram.str_type]
+        counters = c[str(n) + 'gram']['counters']
+        if not collection.find({'term' : gram}):
+            if counters.find({'str_type' : type(gram).__name__}):
+                d = counters.find_one_and_update({
+                'str_type' : type(gram).__name__,
+                },
+                {
+                '$inc' : {
+                    'counter' : 1
+                    }
+                }, w=1)
+                collection.insert({
+                '_id' : d['counter'],
+                'term' : gram.cooked
+                })
+            else:
+                counters.insert_one({
+                'str_type' : type(gram).__name__,
+                'counter' = 1
+                }, w=1)
+                collection.insert({
+                '_id' : 0,
+                'term' : gram.cooked
+                })
 
     def __update_source__(self):
         collection = c[self['source']][type(self).__name__]
@@ -201,7 +228,7 @@ class Comment(DictLike):
         for n in self.n_list:
             for str_type in self.str_classes:
                 for gram in ngrams(self[str_type.__name__], n):
-                    collection = c[self['source']][str_type.__name__]
+                    self.__update_dictionary__(gran, n)
                     self.__update_body__(collection, gram, n)
 
 
