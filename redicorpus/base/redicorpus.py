@@ -96,8 +96,18 @@ class Lemma(StringLike):
         return "Lemma"
 
     def lemmer(self, data):
-        return WordNetLemmatizer().lemmatize(data)
+        return WordNetLemmatizer().lemmatize(data, self.pos_to_wordnet(pos))
 
+    @staticmethod
+    def pos_to_wordnet(pos):
+        if pos in ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']:
+            return 'v'
+        elif pos in ['RB', 'RBR', 'RBS']:
+            return 'r'
+        elif pos in ['JJ', 'JJR', 'JJS']:
+            return 'j'
+        else:
+            return 'n'
 
 # Dict classes
 
@@ -302,7 +312,7 @@ class ArrayLike(object):
             result = []
             for i in range(0, len(self.data)):
                 result.append(self.data[i] * other.data[i])
-            return result 
+            return result
 
     def __repr__(self):
         return 'ArrayLike of length {}'.format(len(self.data))
