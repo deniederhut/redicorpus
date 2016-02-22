@@ -171,7 +171,7 @@ class Comment(DictLike):
     def __class__(self):
         return "Comment"
 
-    def __update_body__(self, gram, n):
+    def __update_body__(self, gram, n, str_type):
         collection = c[self['source']][str_type.__name__]
         raw = tuple(string_like.__to_tuple__()[0] for string_like in gram)
         term = tuple(string_like.__to_tuple__()[1] for string_like in gram)
@@ -199,11 +199,11 @@ class Comment(DictLike):
             },
             upsert=True)
 
-    def __update_dictionary__(self, gram, n):
-        collection = c[str(n) + 'gram'][gram.str_type]
+    def __update_dictionary__(self, gram, n, str_type):
+        collection = c[str(n) + 'gram'][str_type.__name__]
         counters = c[str(n) + 'gram']['counters']
         if not collection.find({'term' : gram}):
-            if counters.find({'str_type' : type(gram).__name__}):
+            if counters.find({'str_type' : str_type.__name__}):
                 d = counters.find_one_and_update({
                 'str_type' : type(gram).__name__,
                 },
@@ -218,8 +218,8 @@ class Comment(DictLike):
                 })
             else:
                 counters.insert_one({
-                'str_type' : type(gram).__name__,
-                'counter' = 1
+                'str_type' : str_type.__name__,
+                'counter' : 1
                 }, w=1)
                 collection.insert({
                 '_id' : 0,
@@ -230,7 +230,7 @@ class Comment(DictLike):
         collection = c[self['source']][type(self).__name__]
         document = deepcopy(self.data)
         for str_type in self.str_classes:
-            document[str_type.__name__] = [string_like.__to_tuple__() for string_like in document[str_type.__name__]]
+            document[str_type.__name__] = [string_like.__to_tuple__() for string_like in self[str_type.__name__]]
         collection.insert_one(document)
 
     def insert(self):
@@ -238,8 +238,8 @@ class Comment(DictLike):
         for n in self.n_list:
             for str_type in self.str_classes:
                 for gram in ngrams(self[str_type.__name__], n):
-                    self.__update_dictionary__(gran, n)
-                    self.__update_body__(collection, gram, n)
+                    self.__update_dictionary__(gram, n, str_type)
+                    self.__update_body__(gram, n, str_type)
 
 
 # Array classes
