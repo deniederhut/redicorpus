@@ -51,7 +51,7 @@ class StringLike(object):
         if not pos:
             pos = pos_tag([data])[0][1]
         self.pos = pos
-        self.str_type = None
+        self.str_type = self.__class__()
 
     def __from_tuple__(self, data):
         self.raw, self.cooked, self.pos, self.str_type = data
@@ -90,12 +90,12 @@ class Lemma(StringLike):
 
     def __init__(self, data, pos=None):
         super(Lemma, self).__init__(data, pos)
-        self.cooked = self.lemmer(data)
+        self.cooked = self.lemmer(data, pos)
 
     def __class__(self):
         return "Lemma"
 
-    def lemmer(self, data):
+    def lemmer(self, data, pos):
         return WordNetLemmatizer().lemmatize(data, self.pos_to_wordnet(pos))
 
     @staticmethod
