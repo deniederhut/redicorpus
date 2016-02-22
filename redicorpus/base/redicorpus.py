@@ -76,7 +76,7 @@ class Stem(StringLike):
 
     def __init__(self, data, pos=None):
         super(Stem, self).__init__(data, pos)
-        self.cooked = self.stemmer(data, self.pos)
+        self.cooked = self.stemmer(data)
 
     def __class__(self):
         return "Stem"
@@ -105,7 +105,7 @@ class Lemma(StringLike):
         elif pos in ['RB', 'RBR', 'RBS']:
             return 'r'
         elif pos in ['JJ', 'JJR', 'JJS']:
-            return 'j'
+            return 'a'
         else:
             return 'n'
 
