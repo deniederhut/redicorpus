@@ -24,7 +24,7 @@ def test_dict_like():
     assert list(obj.items()) == [('test', 42)]
 
 def test_comment():
-    with open('data/comment.json', 'r') as f:
+    with open('test/data/comment.json', 'r') as f:
         data = json.load(f)
     comment = rc.Comment(data)
     assert isinstance(comment, rc.DictLike)
