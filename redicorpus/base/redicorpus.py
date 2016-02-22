@@ -76,7 +76,7 @@ class Stem(StringLike):
 
     def __init__(self, data, pos=None):
         super(Stem, self).__init__(data, pos)
-        self.cooked = self.stemmer(data)
+        self.cooked = self.stemmer(data, self.pos)
 
     def __class__(self):
         return "Stem"
@@ -90,7 +90,7 @@ class Lemma(StringLike):
 
     def __init__(self, data, pos=None):
         super(Lemma, self).__init__(data, pos)
-        self.cooked = self.lemmer(data, pos)
+        self.cooked = self.lemmer(data, self.pos)
 
     def __class__(self):
         return "Lemma"
