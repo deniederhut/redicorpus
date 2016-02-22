@@ -7,10 +7,16 @@ from redicorpus.base import redicorpus as rc
 import time
 
 def test_string():
-    obj = rc.String('try')
-    assert obj.__to_tuple__() == ('try', 'try', 'NN', None)
+    obj = rc.String('fried')
+    assert obj.__to_tuple__() == ('fried', 'fried', 'VBN', 'String')
 
-# TODO insert tests for other StringLike
+def test_stem():
+    obj = rc.Stem('fried')
+    assert obj.__to_tuple__() == ('fri', 'fried', 'VBN', 'Stem')
+
+def test_lemma():
+    obj = rc.Lemma('fried')
+    assert obj.__to_tuple__() == ('fry', 'fried', 'VBN', 'Lemma')
 
 def test_comment():
     with open('data/comment.json', 'r') as f:
