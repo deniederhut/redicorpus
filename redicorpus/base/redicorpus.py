@@ -200,30 +200,31 @@ class Comment(DictLike):
             upsert=True)
 
     def __update_dictionary__(self, gram, n, str_type):
-        collection = c[str(n) + 'gram'][str_type.__name__]
+        dictionary = c[str(n) + 'gram'][str_type.__name__]
         counters = c[str(n) + 'gram']['counters']
-        if not collection.find({'term' : gram}):
-            if counters.find({'str_type' : str_type.__name__}):
-                d = counters.find_one_and_update({
-                'str_type' : type(gram).__name__,
-                },
-                {
-                '$inc' : {
-                    'counter' : 1
-                    }
-                }, w=1)
-                collection.insert({
-                '_id' : d['counter'],
-                'term' : gram.cooked
+        cooked_gram = ' '.join([item.cooked for item in gram])
+        if not dictionary.find_one({'term' : cooked_gram}):
+            id_counter = counters.find_one_and_update({
+            'str_type' : str_type.__name__,
+            },
+            {
+            '$inc' : {
+                'counter' : 1
+                }
+            }, return_document=True)
+            if id_counter:
+                dictionary.insert_one({
+                '_id' : id_counter['counter'],
+                'term' : cooked_gram
                 })
             else:
                 counters.insert_one({
                 'str_type' : str_type.__name__,
-                'counter' : 1
-                }, w=1)
-                collection.insert({
+                'counter' : 0
+                })
+                dictionary.insert_one({
                 '_id' : 0,
-                'term' : gram.cooked
+                'term' : cooked_gram
                 })
 
     def __update_source__(self):

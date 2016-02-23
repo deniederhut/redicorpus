@@ -43,9 +43,9 @@ def test_update_dictionary():
     counter = c['1gram']['counters'].find_one({'str_type' : 'Lemma'})
     assert counter
     assert counter['counter'] > 1
-    document = c['1gram']['Lemma']
+    document = c['1gram']['Lemma'].find_one()
     assert document
-    assert document['_id'] < counter['counter']
+    assert document['_id'] <= counter['counter']
 
 def test_update_source():
     document = c['test']['Comment'].find_one({'_id' : "d024gzv"})
@@ -63,3 +63,6 @@ def test_map():
 def test_cleanup():
     for collection in c['test'].collection_names():
         c['test'].drop_collection(collection)
+    for database in ['1gram', '2gram', '3gram']:
+        for collection in c[database].collection_names():
+            c[database].drop_collection(collection)
