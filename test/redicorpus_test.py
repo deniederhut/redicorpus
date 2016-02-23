@@ -52,7 +52,13 @@ def test_update_source():
     assert document
 
 def test_array_like():
-    pass
+    array = rc.ArrayLike(1, 'String', [1,2,3,4])
+    assert array + 1 == [2, 3, 4, 5]
+    assert array + rc.ArrayLike(1, 'String', [0, 1]) == [2, 4, 4, 5]
+    assert array * 2 == [4, 6, 8, 10]
+    assert array * rc.ArrayLike(1, 'String', [0, 1]) == [0, 6, 0, 0]
+    assert 2 in array
+    assert array['the']
 
 def test_body():
     pass
