@@ -248,10 +248,14 @@ class Comment(DictLike):
 class ArrayLike(object):
     """Acts like an array, but has mongo based dictionary methods"""
 
-    def __init__(self, data=None):
+    def __init__(self, n, str_type, data=None):
         self.data =[]
         if data:
             self.data = data
+        self.n = n
+        assert str_type in [subclass.__name__ for subclass in StringLike.__subclasses__()]
+        self.str_type = str_type
+        self.dictionary = c[str(n) + 'gram'][str_type]
 
     def __add__(self, other):
         if isinstance(other, int) | isinstance(other, float):
@@ -268,11 +272,10 @@ class ArrayLike(object):
         return "ArrayLike"
 
     def __contains__(self, key):
-        result = self.__getitem__(key)
-        if not result:
-            return False
-        else:
+        if self.__getitem__(key):
             return True
+        else:
+            return False
 
     def __forcelen__(self, other):
         if len(self) > len(other):
@@ -284,18 +287,26 @@ class ArrayLike(object):
         if isinstance(key, int):
             return self.data[key]
         else:
-            string_type = type(String('a'))
-            if isinstance(key, StringLike):
-                key = key.cooked
-                string_type = type(key)
-            i = c['dictionary'][string_type].find_one(
-            {
-                'term' : key
-            }, {
-                'index' : 1
-                }
-            )['index']
-            return self.data[i]
+            ix = self.__getix__(key)
+            return self.data[ix]
+
+    def __getix__(self, key):
+        if isinstance(key, str):
+            pass
+        elif isinstance(key, StringLike):
+            key = key.cooked
+        elif isinstance(key, tuple) & isinstance(key[0], StringLike):
+            key = ' '.join([string_like.cooked for string_like in key])
+        else:
+            raise TypeError("Expected str, StringLike, or tuple of StringLikes")
+        ix = self.dictionary.find_one(
+        {
+            'term' : key
+        }, {
+            '_id' : 1
+            }
+        )['_id']
+        return ix
 
     def __iter__(self):
         for item in self.data:
@@ -308,7 +319,7 @@ class ArrayLike(object):
         if isinstance(other, float) | isinstance(other, int):
             self.data = [item * other for item in self.data]
             return self.data
-        elif isinstance(value, ArrayLike):
+        elif isinstance(other, ArrayLike):
             self.__forcelen__(other)
             result = []
             for i in range(0, len(self.data)):
@@ -322,18 +333,8 @@ class ArrayLike(object):
         if isinstance(key, int):
             self.data[key] = value
         else:
-            string_type = type(String('a'))
-            if isinstance(key, StringLike):
-                key = key.cooked
-                string_type = type(key)
-            i = c['dictionary'][string_type].find_one(
-            {
-                'term' : key
-            }, {
-                'index' : 1
-                }
-            )['index']
-            self.data[i] = value
+            ix = self.__getix__(key)
+            self.data[ix] = value
 
     def __str__(self):
         return str(self.data)
