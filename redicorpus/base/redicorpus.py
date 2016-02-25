@@ -249,7 +249,7 @@ class Comment(DictLike):
 class ArrayLike(object):
     """Acts like an array, but has database dictionary methods"""
 
-    def __init__(self, n, str_type, data=None):
+    def __init__(self, data=None, n=1, str_type='String'):
         self.data = []
         if data:
             self.data = data
@@ -347,10 +347,10 @@ class Vector(ArrayLike):
     count type, gram length, and time period
     """
 
-    def __init__(self, n, string_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
-        super(Vector, self).__init__(n, string_type)
+    def __init__(self, n, str_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+        super(Vector, self).__init__(n, str_type)
         assert source in c.database_names()
-        assert string_type in [string_like.__name__ for string_like in StringLike.__subclasses__()]
+        assert str_type in [string_like.__name__ for string_like in StringLike.__subclasses__()]
         for date in [start_date, stop_date]:
             if date:
                 assert isinstance(date, datetime)
@@ -358,7 +358,7 @@ class Vector(ArrayLike):
         self.count_type = count_type
         self.start_date = start_date
         self.stop_date = stop_date
-        self.collection = c[source][string_type]
+        self.collection = c[source][str_type]
         self.__fromdb__()
 
     def __fromdb__(self):
@@ -383,17 +383,17 @@ class Vector(ArrayLike):
             raise FileNotFoundError
 
     def __fromcursor__(self):
-        counts = ArrayLike(self.n, self.str_type)
-        documents = ArrayLike(self.n, self.str_type)
-        users = ArrayLike(self.n, self.str_type)
+        counts = ArrayLike(n=self.n, str_type=self.str_type)
+        documents = ArrayLike(n=self.n, str_type=self.str_type)
+        users = ArrayLike(n=self.n, str_type=self.str_type)
         for document in self.collection.find({
             'date' : {
                 '$gt' : self.start_date, '$lt' : self.stop_date
             }
         }):
-            counts += ArrayLike(self.n, self.str_type, document['counts'])
-            documents += ArrayLike(self.n, self.str_type, [len(item) for item in document['documents']])
-            users += ArrayLike(self.n, self.str_type, [len(item) for item in['users']])
+            counts += ArrayLike(document['count'])
+            documents += ArrayLike([len(item) for item in document['documents']])
+            users += ArrayLike([len(item) for item in['users']])
         if self.count_type == 'activation':
             self.data = list(self.activation(counts, users).data)
         elif self.count_type == 'count':
