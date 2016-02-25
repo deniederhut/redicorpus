@@ -8,6 +8,7 @@ Built on MongoDB, Celery, and NLTK
 
 from copy import deepcopy
 from datetime import datetime, timedelta
+from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from redicorpus import c, app
 
@@ -246,10 +247,10 @@ class Comment(DictLike):
 # Array classes
 
 class ArrayLike(object):
-    """Acts like an array, but has mongo based dictionary methods"""
+    """Acts like an array, but has database dictionary methods"""
 
     def __init__(self, n, str_type, data=None):
-        self.data =[]
+        self.data = []
         if data:
             self.data = data
         self.n = n
@@ -327,7 +328,7 @@ class ArrayLike(object):
             return result
 
     def __repr__(self):
-        return 'ArrayLike of length {}'.format(len(self.data))
+        return '{} of length {}'.format(self.__class__(), len(self.data))
 
     def __setitem__(self, key, value):
         if isinstance(key, int):
@@ -340,65 +341,93 @@ class ArrayLike(object):
         return str(self.data)
 
 
-class Body(ArrayLike):
-    """All of the frequency counts for a time period"""
+class Vector(ArrayLike):
+    """
+    An ArrayLike of term frequencies for a given string type,
+    count type, gram length, and time period
+    """
 
-    def __init__(self, source, string_type, gram_length, time_stamp, time_delta=timedelta(1)):
+    def __init__(self, n, string_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+        super(Vector, self).__init__(n, string_type)
         assert source in c.database_names()
-        assert string_type in ('string', 'stem', 'lemma')
-        assert isinstance(time_stamp, datetime)
-        assert isinstance(time_delta, timedelta)
+        assert string_type in [string_like.__name__ for string_like in StringLike.__subclasses__()]
+        for date in [start_date, stop_date]:
+            if date:
+                assert isinstance(date, datetime)
 
-        collection = c[source][string_type]
-        if time_delta.seconds: #if resolution < day
-            # result = self.__catch_body()
-            raise BaseException('Resolution not supported')
+        self.count_type = count_type
+        self.start_date = start_date
+        self.stop_date = stop_date
+        self.collection = c[source][string_type]
+        self.__fromdb__()
+
+    def __fromdb__(self):
+        try:
+            self.__fromcache__()
+        except FileNotFoundError:
+            self.__fromcursor__()
+
+    def __fromcache__(self):
+        result = self.collection.find_one({
+            'start_date' : self.start_date,
+            'stop_date' : self.stop_date,
+            self.count_type : {
+                '$exists' : True
+            }
+        }, {
+            self.count_type : 1
+        })
+        if result:
+            self.data = result[self.count_type]
         else:
-            result = self.__from_db(collection, gram_length, time_stamp, time_delta)
-        self.data = result['count']
-        self.documents = result['documents']
-        self.users = result['users']
+            raise FileNotFoundError
 
-    def __catch_body(self, source, string_type, time_stamp, time_delta):
-        # initialize result
-        for document in c[source]['comments'].find({
-            'datetime' : {
-                '$gt' : time_stamp, '$lt' : time_stamp + time_delta
-        }}):
-            comment = Comment(document)
-            # count comment
-        # return result
+    def __fromcursor__(self):
+        counts = ArrayLike(self.n, self.str_type)
+        documents = ArrayLike(self.n, self.str_type)
+        users = ArrayLike(self.n, self.str_type)
+        for document in self.collection.find({
+            'date' : {
+                '$gt' : self.start_date, '$lt' : self.stop_date
+            }
+        }):
+            counts += ArrayLike(self.n, self.str_type, document['counts'])
+            documents += ArrayLike(self.n, self.str_type, [len(item) for item in document['documents']])
+            users += ArrayLike(self.n, self.str_type, [len(item) for item in['users']])
+        if self.count_type == 'activation':
+            self.data = list(self.activation(counts, users).data)
+        elif self.count_type == 'count':
+            self.data = list(counts)
+        elif self.count_type == 'tf':
+            self.data = list(self.tf(counts).data)
+        elif self.count_type == 'tfidf':
+            self.data = list(self.tfidf(counts, documents).data)
+        else:
+            raise ValueError("Expected one of 'activation', 'count', 'tf', or 'tfidf'")
+        self.__tocache__()
 
-    def __from_db(self, collection, time_stamp, time_delta):
-        result = {
-            'count' : ArrayLike(),
-            'documents' : ArrayLike(),
-            'users' : ArrayLike()
-        }
-        for document in collection.find({
-            '_id' :
-                {'$gt' : time_stamp, '$lt' : time_stamp + time_delta
-        }}):
-            result['count'] += ArrayLike(document['count'])
-            result['document'] += ArrayLike(document['document'])
-            result['users'] += ArrayLike(document['users'])
-        return result
+    def __tocache__(self):
+        self.collection.update_one({
+            'start_date' : self.start_date,
+            'stop_date' : self.stop_date
+        }, {
+            '$set' : {self.count_type : self.data}
+        }, upsert=True)
 
-    def activation(self):
-        total_users = sum(self.users) ** -1
-        return [count * total_users for count in self.users]
+    @staticmethod
+    def activation(users):
+        inverse_total_users = sum(users) ** -1
+        return users * inverse_total_users
 
-    def count(self):
-        return self.data
+    @staticmethod
+    def tf(counts):
+        inverse_total_counts = sum(counts) ** -1
+        return counts * inverse_total_counts
 
-    def tfidf(self):
-        result = []
-        for count, document in zip (self.count(), self.tfidf):
-            try:
-                result.append(count / document)
-            except ZeroDivisionError:
-                result.append(0)
-        return result
+    @staticmethod
+    def tfidf(counts, documents):
+        total_documents = sum(document)
+        return counts * log(total_documents/(1+documents), base=10)
 
 
 class Map(ArrayLike):
@@ -441,8 +470,8 @@ class Map(ArrayLike):
         # TODO support for ngrams
         for document in self.collection.find({
         'date' : {
-            '$gt' : self.time_stamp,
-            '$lt' : self.time_stamp + self.time_delta
+            start_time : {'$gt' : self.start_time},
+            stop_time : {'$lt' : self.stop_time}
             }
         }, {
         type(term) : 1
