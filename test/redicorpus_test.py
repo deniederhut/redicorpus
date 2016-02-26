@@ -7,6 +7,13 @@ from redicorpus import c
 from redicorpus.base import redicorpus as rc
 import time
 
+def test_cleanup():
+    for collection in c['test'].collection_names():
+        c['test'].drop_collection(collection)
+    for database in ['1gram', '2gram', '3gram']:
+        for collection in c[database].collection_names():
+            c[database].drop_collection(collection)
+
 def test_string():
     obj = rc.String('fried')
     assert obj.__to_tuple__() == ('fried', 'fried', 'VBN', 'String')
@@ -55,6 +62,7 @@ def test_update_source():
 
 def test_array_like():
     array = rc.ArrayLike([1,2,3,4], 1, 'String')
+    assert array.n == 1
     assert array + 1 == [2, 3, 4, 5]
     assert array + rc.ArrayLike([0, 1], 1, 'String') == [2, 4, 4, 5]
     assert array * 2 == [4, 6, 8, 10]
@@ -63,14 +71,10 @@ def test_array_like():
     assert array['the']
 
 def test_vector():
-    vector = rc.Vector(n=1, str_type='Stem', count_type='count', source='test')
+    vector = rc.Vector(n=1, str_type='String', count_type='count', source='test')
+    assert vector.n == 1
+    assert vector.start_date == datetime(1970, 1, 1, 0, 0)
+    assert vector.data == [9, 1, 1, 2, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
 def test_map():
     pass
-
-def test_cleanup():
-    for collection in c['test'].collection_names():
-        c['test'].drop_collection(collection)
-    for database in ['1gram', '2gram', '3gram']:
-        for collection in c[database].collection_names():
-            c[database].drop_collection(collection)
