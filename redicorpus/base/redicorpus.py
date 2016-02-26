@@ -263,7 +263,7 @@ class ArrayLike(object):
             self.data = [item + other for item in self.data]
             return self.data
         elif isinstance(other, ArrayLike):
-            self.__forcelen__(other)
+            self.__matchlen__(other)
             result = []
             for i in range(0, len(self.data)):
                 result.append(self.data[i] + other.data[i])
@@ -278,11 +278,9 @@ class ArrayLike(object):
         else:
             return False
 
-    def __forcelen__(self, other):
-        if len(self) > len(other):
-            other.data = other.data + [0] * (len(self) - len(other))
-        elif len(other) > len(self.data):
-            self.data = self.data + [0] * (len(other) - len(self.data))
+    def __forcelen__(self, length):
+        if length > len(self):
+            self.data = self.data + [0] * (length - len(self))
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -298,6 +296,8 @@ class ArrayLike(object):
             key = key.cooked
         elif isinstance(key, tuple) & isinstance(key[0], StringLike):
             key = ' '.join([string_like.cooked for string_like in key])
+        elif isinstance(key, list):
+            key = ' '.join([item for item in key])
         else:
             raise TypeError("Expected str, StringLike, or tuple of StringLikes")
         ix = self.dictionary.find_one(
@@ -316,12 +316,18 @@ class ArrayLike(object):
     def __len__(self):
         return len(self.data)
 
+    def __matchlen__(self, other):
+        if len(self) > len(other):
+            other.data = other.data + [0] * (len(self) - len(other))
+        elif len(other) > len(self.data):
+            self.data = self.data + [0] * (len(other) - len(self.data))
+
     def __mul__(self, other):
         if isinstance(other, float) | isinstance(other, int):
             self.data = [item * other for item in self.data]
             return self.data
         elif isinstance(other, ArrayLike):
-            self.__forcelen__(other)
+            self.__matchlen__(other)
             result = []
             for i in range(0, len(self.data)):
                 result.append(self.data[i] * other.data[i])
@@ -330,12 +336,20 @@ class ArrayLike(object):
     def __repr__(self):
         return '{} of length {}'.format(self.__class__(), len(self.data))
 
+    def __setbyix__(self, key, value):
+        try:
+            self.data[key] = value
+        except IndexError as e:
+            if e.args[0] == 'list assignment index out of range':
+                self.__forcelen__(key + 1)
+                self.data[key] = value
+
     def __setitem__(self, key, value):
         if isinstance(key, int):
-            self.data[key] = value
+            self.__setbyix__(key, value)
         else:
             ix = self.__getix__(key)
-            self.data[ix] = value
+            self.__setbyix__(ix, value)
 
     def __str__(self):
         return str(self.data)
@@ -391,9 +405,10 @@ class Vector(ArrayLike):
                 '$gt' : self.start_date, '$lt' : self.stop_date
             }
         }):
-            counts += ArrayLike(document['count'])
-            documents += ArrayLike([len(item) for item in document['documents']])
-            users += ArrayLike([len(item) for item in['users']])
+            ix = counts.__getix__(document['term'])
+            counts[ix] = document['count']
+            documents[ix] = len(document['documents'])
+            users[ix] = len(document['users'])
         if self.count_type == 'activation':
             self.data = list(self.activation(counts, users).data)
         elif self.count_type == 'count':

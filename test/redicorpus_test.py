@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from datetime import datetime
 import json
 import pytest
 from redicorpus import c
@@ -26,6 +27,7 @@ def test_dict_like():
 def test_comment():
     with open('test/data/comment.json', 'r') as f:
         data = json.load(f)
+    data['date'] = datetime.fromtimestamp(data['date'])
     comment = rc.Comment(data)
     assert isinstance(comment, rc.DictLike)
     assert len(comment)
@@ -52,16 +54,17 @@ def test_update_source():
     assert document
 
 def test_array_like():
-    array = rc.ArrayLike(1, 'String', [1,2,3,4])
+    array = rc.ArrayLike([1,2,3,4], 1, 'String')
     assert array + 1 == [2, 3, 4, 5]
-    assert array + rc.ArrayLike(1, 'String', [0, 1]) == [2, 4, 4, 5]
+    assert array + rc.ArrayLike([0, 1], 1, 'String') == [2, 4, 4, 5]
     assert array * 2 == [4, 6, 8, 10]
-    assert array * rc.ArrayLike(1, 'String', [0, 1]) == [0, 6, 0, 0]
+    assert array * rc.ArrayLike([0, 1], 1, 'String') == [0, 6, 0, 0]
     assert 2 in array
     assert array['the']
 
-def test_body():
-    pass
+def test_vector():
+    vector = rc.Vector(2, 'Stem', 'count', 'test')
+    assert vector.data == [1,2,3]
 
 def test_map():
     pass
