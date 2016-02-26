@@ -63,8 +63,7 @@ def test_array_like():
     assert array['the']
 
 def test_vector():
-    vector = rc.Vector(2, 'Stem', 'count', 'test')
-    assert vector.data == [1,2,3]
+    vector = rc.Vector(n=1, str_type='Stem', count_type='count', source='test')
 
 def test_map():
     pass

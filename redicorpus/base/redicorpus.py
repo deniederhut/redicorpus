@@ -296,7 +296,7 @@ class ArrayLike(object):
             key = key.cooked
         elif isinstance(key, tuple) & isinstance(key[0], StringLike):
             key = ' '.join([string_like.cooked for string_like in key])
-        elif isinstance(key, list):
+        elif isinstance(key, list) & isinstance(key[0], str):
             key = ' '.join([item for item in key])
         else:
             raise TypeError("Expected str, StringLike, or tuple of StringLikes")
@@ -403,7 +403,8 @@ class Vector(ArrayLike):
         for document in self.collection.find({
             'date' : {
                 '$gt' : self.start_date, '$lt' : self.stop_date
-            }
+            },
+            'n' : self.n
         }):
             ix = counts.__getix__(document['term'])
             counts[ix] = document['count']
