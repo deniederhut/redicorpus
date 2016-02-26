@@ -362,7 +362,7 @@ class Vector(ArrayLike):
     """
 
     def __init__(self, n, str_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
-        super(Vector, self).__init__(n, str_type)
+        super(Vector, self).__init__(n=n, str_type=str_type)
         assert source in c.database_names()
         assert str_type in [string_like.__name__ for string_like in StringLike.__subclasses__()]
         for date in [start_date, stop_date]:
@@ -411,13 +411,13 @@ class Vector(ArrayLike):
             documents[ix] = len(document['documents'])
             users[ix] = len(document['users'])
         if self.count_type == 'activation':
-            self.data = list(self.activation(counts, users).data)
+            self.data = self.activation(counts, users)
         elif self.count_type == 'count':
-            self.data = list(counts)
+            self.data = counts.data
         elif self.count_type == 'tf':
-            self.data = list(self.tf(counts).data)
+            self.data = self.tf(counts)
         elif self.count_type == 'tfidf':
-            self.data = list(self.tfidf(counts, documents).data)
+            self.data = self.tfidf(counts, documents)
         else:
             raise ValueError("Expected one of 'activation', 'count', 'tf', or 'tfidf'")
         self.__tocache__()
@@ -431,6 +431,7 @@ class Vector(ArrayLike):
         }, upsert=True)
 
     @staticmethod
+    # TODO total users calculation should be total UNIQUE users
     def activation(users):
         inverse_total_users = sum(users) ** -1
         return users * inverse_total_users
