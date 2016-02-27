@@ -7,6 +7,10 @@ from redicorpus import c
 from redicorpus.base import redicorpus as rc
 import time
 
+count_type_list = ['activation', 'count', 'tf', 'tfidf']
+gram_length_list = [1, 2, 3]
+str_type_list = ['String', 'Stem', 'Lemma']
+
 def test_cleanup():
     for database in ['String', 'Stem', 'Lemma', 'Counter', 'Map', 'Comment']:
         for collection in c[database].collection_names():
@@ -40,19 +44,20 @@ def test_comment():
     r = comment.insert()
 
 def test_update_body():
-    for str_type in rc.StringLike.__subclasses__():
-        document = c[str_type.__name__]['test'].find_one()
+    for str_type in str_type_list:
+        document = c[str_type]['test'].find_one()
         assert document
         assert len(document['users']) == 1
         assert document['count'] == len(document['polarity'])
 
 def test_update_dictionary():
-    counter = c['Counter']['1gram'].find_one({'str_type' : 'Lemma'})
-    assert counter
-    assert counter['counter'] > 1
-    document = c['Lemma']['1gram'].find_one()
-    assert document
-    assert document['_id'] <= counter['counter']
+    for str_type in str_type_list:
+        counter = c['Counter']['1gram'].find_one({'str_type' : str_type})
+        assert counter
+        assert counter['counter'] > 1
+        document = c[str_type]['1gram'].find_one()
+        assert document
+        assert document['_id'] <= counter['counter']
 
 def test_update_source():
     document = c['Comment']['test'].find_one({'_id' : "d024gzv"})
@@ -69,9 +74,9 @@ def test_array_like():
     assert array['the']
 
 def test_vector():
-    for count_type in ['activation', 'count', 'tf', 'tfidf']:
-        for gram_length in [1, 2, 3]:
-            for str_type in ['String', 'Stem', 'Lemma']:
+    for count_type in count_type_list:
+        for gram_length in gram_length_list:
+            for str_type in str_type_list:
                 vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
                 assert vector.n == gram_length
                 assert vector.start_date == datetime(1970, 1, 1, 0, 0)
