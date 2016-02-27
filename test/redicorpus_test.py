@@ -8,9 +8,7 @@ from redicorpus.base import redicorpus as rc
 import time
 
 def test_cleanup():
-    for collection in c['test'].collection_names():
-        c['test'].drop_collection(collection)
-    for database in ['1gram', '2gram', '3gram']:
+    for database in ['String', 'Stem', 'Lemma', 'Counter', 'Map', 'Comment']:
         for collection in c[database].collection_names():
             c[database].drop_collection(collection)
 
@@ -43,21 +41,21 @@ def test_comment():
 
 def test_update_body():
     for str_type in rc.StringLike.__subclasses__():
-        document = c['test'][str_type.__name__].find_one()
+        document = c[str_type.__name__]['test'].find_one()
         assert document
         assert len(document['users']) == 1
         assert document['count'] == len(document['polarity'])
 
 def test_update_dictionary():
-    counter = c['1gram']['counters'].find_one({'str_type' : 'Lemma'})
+    counter = c['Counter']['1gram'].find_one({'str_type' : 'Lemma'})
     assert counter
     assert counter['counter'] > 1
-    document = c['1gram']['Lemma'].find_one()
+    document = c['Lemma']['1gram'].find_one()
     assert document
     assert document['_id'] <= counter['counter']
 
 def test_update_source():
-    document = c['test']['Comment'].find_one({'_id' : "d024gzv"})
+    document = c['Comment']['test'].find_one({'_id' : "d024gzv"})
     assert document
 
 def test_array_like():

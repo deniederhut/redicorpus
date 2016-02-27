@@ -173,7 +173,7 @@ class Comment(DictLike):
         return "Comment"
 
     def __updatebody__(self, gram, n, str_type):
-        collection = c[self['source']][str_type.__name__]
+        collection = c[str_type.__name__][self['source']]
         term = tuple(string_like.__totuple__()[0] for string_like in gram)
         raw = tuple(string_like.__totuple__()[1] for string_like in gram)
         pos = tuple(string_like.__totuple__()[2] for string_like in gram)
@@ -201,8 +201,8 @@ class Comment(DictLike):
             upsert=True)
 
     def __updatedictionary__(self, gram, n, str_type):
-        dictionary = c[str(n) + 'gram'][str_type.__name__]
-        counters = c[str(n) + 'gram']['counters']
+        dictionary = c[str_type.__name__][str(n) + 'gram']
+        counters = c['Counter'][str(n) + 'gram']
         cooked_gram = ' '.join([item.cooked for item in gram])
         if not dictionary.find_one({'term' : cooked_gram}):
             id_counter = counters.find_one_and_update({
@@ -229,7 +229,7 @@ class Comment(DictLike):
                 })
 
     def __updatecollection__(self):
-        collection = c[self['source']][type(self).__name__]
+        collection = c[type(self).__name__][self['source']]
         document = deepcopy(self.data)
         for str_type in self.str_classes:
             document[str_type.__name__] = [string_like.__totuple__() for string_like in self[str_type.__name__]]
@@ -256,7 +256,7 @@ class ArrayLike(object):
         self.n = n
         assert str_type in [subclass.__name__ for subclass in StringLike.__subclasses__()]
         self.str_type = str_type
-        self.dictionary = c[str(n) + 'gram'][str_type]
+        self.dictionary = c[str_type][str(n) + 'gram']
 
     def __add__(self, other):
         if isinstance(other, int) | isinstance(other, float):
@@ -363,7 +363,7 @@ class Vector(ArrayLike):
 
     def __init__(self, n, str_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
         super(Vector, self).__init__(n=n, str_type=str_type)
-        assert source in c.database_names()
+        assert source in c['Comment'].collection_names()
         assert str_type in [string_like.__name__ for string_like in StringLike.__subclasses__()]
         for date in [start_date, stop_date]:
             if date:
@@ -372,7 +372,7 @@ class Vector(ArrayLike):
         self.count_type = count_type
         self.start_date = start_date
         self.stop_date = stop_date
-        self.collection = c[source][str_type]
+        self.collection = c[str_type][source]
         self.__fromdb__()
 
     def __fromdb__(self):
@@ -461,7 +461,7 @@ class Map(ArrayLike):
         self.time_stamp = time_stamp
         self.time_delta = time_delta
         self.position = position
-        self.collection = c[source]['maps']
+        self.collection = c['Map'][source]
 
         if data:
             self.__from_dict(data)
