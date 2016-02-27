@@ -55,7 +55,7 @@ class StringLike(object):
         self.str_type = self.__class__()
 
     def __from_tuple__(self, data):
-        self.raw, self.cooked, self.pos, self.str_type = data
+        self.cooked, self.raw, self.pos, self.str_type = data
 
     def __to_tuple__(self):
         return self.cooked, self.raw, self.pos, self.str_type
@@ -174,8 +174,8 @@ class Comment(DictLike):
 
     def __update_body__(self, gram, n, str_type):
         collection = c[self['source']][str_type.__name__]
-        raw = tuple(string_like.__to_tuple__()[0] for string_like in gram)
-        term = tuple(string_like.__to_tuple__()[1] for string_like in gram)
+        term = tuple(string_like.__to_tuple__()[0] for string_like in gram)
+        raw = tuple(string_like.__to_tuple__()[1] for string_like in gram)
         pos = tuple(string_like.__to_tuple__()[2] for string_like in gram)
         collection.update_one(
             {
