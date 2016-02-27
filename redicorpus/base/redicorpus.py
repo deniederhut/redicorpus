@@ -21,9 +21,9 @@ class StringLike(object):
     def __init__(self, data=None, pos=None):
         if data:
             if isinstance(data, str):
-                self.__from_string__(data, pos)
+                self.__fromstring__(data, pos)
             elif isinstance(data, tuple):
-                self.__from_tuple__(data)
+                self.__fromtuple__(data)
 
     def __add__(self, x):
         return str(self.cooked) + str(x)
@@ -47,17 +47,17 @@ class StringLike(object):
     def __str__(self):
         return self.cooked
 
-    def __from_string__(self, data, pos):
+    def __fromstring__(self, data, pos):
         self.raw = data
         if not pos:
             pos = pos_tag([data])[0][1]
         self.pos = pos
         self.str_type = self.__class__()
 
-    def __from_tuple__(self, data):
+    def __fromtuple__(self, data):
         self.cooked, self.raw, self.pos, self.str_type = data
 
-    def __to_tuple__(self):
+    def __totuple__(self):
         return self.cooked, self.raw, self.pos, self.str_type
 
 
@@ -140,13 +140,13 @@ class DictLike(object):
     def __str__(self):
         return str(self.data)
 
-    def __from_dict__(self, data):
+    def __fromdict__(self, data):
         assert isinstance(data, dict)
         assert '_id' in data
         for key in data:
             self.data[key] = data.get(key)
 
-    def __to_dict__(self):
+    def __todict__(self):
         return self.data
 
     def keys(self):
@@ -165,18 +165,18 @@ class Comment(DictLike):
     def __init__(self, data):
         super(Comment, self).__init__()
         if isinstance(data, dict):
-            self.__from_dict__(data)
+            self.__fromdict__(data)
         for str_type in self.str_classes:
             self[str_type.__name__] = tokenize.apply(args=[self['raw'], str_type]).result
 
     def __class__(self):
         return "Comment"
 
-    def __update_body__(self, gram, n, str_type):
+    def __updatebody__(self, gram, n, str_type):
         collection = c[self['source']][str_type.__name__]
-        term = tuple(string_like.__to_tuple__()[0] for string_like in gram)
-        raw = tuple(string_like.__to_tuple__()[1] for string_like in gram)
-        pos = tuple(string_like.__to_tuple__()[2] for string_like in gram)
+        term = tuple(string_like.__totuple__()[0] for string_like in gram)
+        raw = tuple(string_like.__totuple__()[1] for string_like in gram)
+        pos = tuple(string_like.__totuple__()[2] for string_like in gram)
         collection.update_one(
             {
             'date' : self['date'],
@@ -200,7 +200,7 @@ class Comment(DictLike):
             },
             upsert=True)
 
-    def __update_dictionary__(self, gram, n, str_type):
+    def __updatedictionary__(self, gram, n, str_type):
         dictionary = c[str(n) + 'gram'][str_type.__name__]
         counters = c[str(n) + 'gram']['counters']
         cooked_gram = ' '.join([item.cooked for item in gram])
@@ -228,20 +228,20 @@ class Comment(DictLike):
                 'term' : cooked_gram
                 })
 
-    def __update_source__(self):
+    def __updatecollection__(self):
         collection = c[self['source']][type(self).__name__]
         document = deepcopy(self.data)
         for str_type in self.str_classes:
-            document[str_type.__name__] = [string_like.__to_tuple__() for string_like in self[str_type.__name__]]
+            document[str_type.__name__] = [string_like.__totuple__() for string_like in self[str_type.__name__]]
         collection.insert_one(document)
 
     def insert(self):
-        self.__update_source__()
+        self.__updatecollection__()
         for n in self.n_list:
             for str_type in self.str_classes:
                 for gram in ngrams(self[str_type.__name__], n):
-                    self.__update_dictionary__(gram, n, str_type)
-                    self.__update_body__(gram, n, str_type)
+                    self.__updatedictionary__(gram, n, str_type)
+                    self.__updatebody__(gram, n, str_type)
 
 
 # Array classes

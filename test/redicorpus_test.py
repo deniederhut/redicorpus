@@ -16,15 +16,15 @@ def test_cleanup():
 
 def test_string():
     obj = rc.String('fried')
-    assert obj.__to_tuple__() == ('fried', 'fried', 'VBN', 'String')
+    assert obj.__totuple__() == ('fried', 'fried', 'VBN', 'String')
 
 def test_stem():
     obj = rc.Stem('fried')
-    assert obj.__to_tuple__() == ('fri', 'fried', 'VBN', 'Stem')
+    assert obj.__totuple__() == ('fri', 'fried', 'VBN', 'Stem')
 
 def test_lemma():
     obj = rc.Lemma('fried')
-    assert obj.__to_tuple__() == ('fry', 'fried', 'VBN', 'Lemma')
+    assert obj.__totuple__() == ('fry', 'fried', 'VBN', 'Lemma')
 
 def test_dict_like():
     obj = rc.DictLike()
