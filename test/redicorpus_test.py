@@ -71,10 +71,13 @@ def test_array_like():
     assert array['the']
 
 def test_vector():
-    vector = rc.Vector(n=1, str_type='String', count_type='count', source='test')
-    assert vector.n == 1
-    assert vector.start_date == datetime(1970, 1, 1, 0, 0)
-    assert vector.data == [9, 1, 1, 2, 1, 2, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 3, 2, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    for count_type in ['activation', 'count', 'tf', 'tfidf']:
+        for gram_length in [1, 2, 3]:
+            for str_type in ['String', 'Stem', 'Lemma']:
+                vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
+                assert vector.n == gram_length
+                assert vector.start_date == datetime(1970, 1, 1, 0, 0)
+                assert len(vector) >= 42
 
 def test_map():
     pass
