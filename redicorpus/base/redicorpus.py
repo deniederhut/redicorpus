@@ -411,7 +411,7 @@ class Vector(ArrayLike):
             documents[ix] = len(document['documents'])
             users[ix] = len(document['users'])
         if self.count_type == 'activation':
-            self.data = self.activation(counts, users)
+            self.data = self.activation(users)
         elif self.count_type == 'count':
             self.data = counts.data
         elif self.count_type == 'tf':
@@ -443,8 +443,10 @@ class Vector(ArrayLike):
 
     @staticmethod
     def tfidf(counts, documents):
-        total_documents = sum(document)
-        return counts * log(total_documents/(1+documents), base=10)
+        tf = ArrayLike(Vector.tf(counts))
+        inverse_total_documents = sum(documents) ** -1
+        idf = ArrayLike([ log( (item + 1) * inverse_total_documents ) for item in documents])
+        return tf * idf
 
 
 class Map(ArrayLike):
