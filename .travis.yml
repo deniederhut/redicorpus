@@ -1,0 +1,25 @@
+language : python
+sudo : true
+cache : false
+python :
+    - 3.4
+    - 3.5
+
+services :
+    - mongodb
+    - rabbitmq
+
+install :
+    - sudo apt-get install openssl
+    - sudo pip install -U celery, nltk, pymongo
+    - sudo python etc/nltk_helper.py
+    - celery -A redicorpus worker
+
+script : py.test
+
+notifications :
+    email :
+        recipients :
+            - dillon.niederhut@gmail.com
+        on_success : change
+        on_failure : change
