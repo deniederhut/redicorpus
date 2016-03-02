@@ -11,8 +11,8 @@ services :
 
 install :
     - sudo apt-get install openssl
-    - sudo pip install -U celery, nltk, pymongo
-    - sudo python etc/nltk_helper.py
+    - pip install requirements.txt
+    - python etc/nltk_helper.py
     - celery -A redicorpus worker
 
 script : py.test
