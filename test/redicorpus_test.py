@@ -11,11 +11,6 @@ count_type_list = ['activation', 'count', 'tf', 'tfidf']
 gram_length_list = [1, 2, 3]
 str_type_list = ['String', 'Stem', 'Lemma']
 
-def test_cleanup():
-    for database in ['String', 'Stem', 'Lemma', 'Counter', 'Map', 'Comment']:
-        for collection in c[database].collection_names():
-            c[database].drop_collection(collection)
-
 def test_string():
     obj = rc.String('fried')
     assert obj.__totuple__() == ('fried', 'fried', 'VBN', 'String')
@@ -84,3 +79,8 @@ def test_vector():
 
 def test_map():
     pass
+
+def test_cleanup():
+    for database in ['String', 'Stem', 'Lemma', 'Counter', 'Map', 'Comment']:
+        for collection in c[database].collection_names():
+            c[database].drop_collection(collection)
