@@ -413,8 +413,8 @@ class Vector(ArrayLike):
         }):
             ix = counts.__getix__(document['term'])
             counts[ix] = document['count']
-            documents[ix] = len(document['documents'])
-            users[ix] = len(document['users'])
+            documents[ix] = document['documents']
+            users[ix] = document['users']
         if self.count_type == 'activation':
             self.data = self.activation(users)
         elif self.count_type == 'count':
@@ -436,9 +436,9 @@ class Vector(ArrayLike):
         }, upsert=True)
 
     @staticmethod
-    # TODO total users calculation should be total UNIQUE users
     def activation(users):
-        inverse_total_users = sum(users) ** -1
+        inverse_total_users = len(Vector.unique(users)) ** -1
+        users = ArrayLike([len(item) for item in users])
         return users * inverse_total_users
 
     @staticmethod
@@ -449,9 +449,17 @@ class Vector(ArrayLike):
     @staticmethod
     def tfidf(counts, documents):
         tf = ArrayLike(Vector.tf(counts))
-        inverse_total_documents = sum(documents) ** -1
+        inverse_total_documents = len(Vector.unique(documents)) ** -1
+        documents = ArrayLike([len(item) for item in documents])
         idf = ArrayLike([ log( (item + 1) * inverse_total_documents ) for item in documents])
         return tf * idf
+
+    @staticmethod
+    def unique(array_like):
+        total_set = set()
+        for sub_list in array_like.data:
+            total_set = total_set | set(sub_list)
+        return total_set
 
 
 class Map(ArrayLike):
