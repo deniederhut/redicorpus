@@ -40,19 +40,20 @@ def test_comment():
 
 def test_update_body():
     for str_type in str_type_list:
-        document = c[str_type]['test'].find_one()
+        document = c['Body']['test'].find_one()
         assert document
         assert len(document['users']) == 1
         assert document['count'] == len(document['polarity'])
 
 def test_update_dictionary():
     for str_type in str_type_list:
-        counter = c['Counter']['1gram'].find_one({'str_type' : str_type})
-        assert counter
-        assert counter['counter'] > 1
-        document = c[str_type]['1gram'].find_one()
-        assert document
-        assert document['_id'] <= counter['counter']
+        for gram_length in gram_length_list:
+            counter = c['Counter'][str_type].find_one({'n' : gram_length})
+            assert counter
+            assert counter['counter'] > 1
+            document = c['Dictionary'][str_type].find_one()
+            assert document
+            assert document['ix'] <= counter['counter']
 
 def test_update_source():
     document = c['Comment']['test'].find_one({'_id' : "d024gzv"})
@@ -81,6 +82,7 @@ def test_map():
     pass
 
 def test_cleanup():
-    for database in ['String', 'Stem', 'Lemma', 'Counter', 'Map', 'Comment']:
-        for collection in c[database].collection_names():
-            c[database].drop_collection(collection)
+    for database in c.database_names():
+        if database not in ['local']:
+            for collection in c[database].collection_names():
+                c[database].drop_collection(collection)

@@ -173,7 +173,7 @@ class Comment(DictLike):
         return "Comment"
 
     def __updatebody__(self, gram, n, str_type):
-        collection = c[str_type.__name__][self['source']]
+        collection = c['Body'][self['source']]
         term = tuple(string_like.__totuple__()[0] for string_like in gram)
         raw = tuple(string_like.__totuple__()[1] for string_like in gram)
         pos = tuple(string_like.__totuple__()[2] for string_like in gram)
@@ -183,7 +183,8 @@ class Comment(DictLike):
             'term' : term,
             'raw' : raw,
             'pos' : pos,
-            'n' : n
+            'n' : n,
+            'str_type' : str_type.__name__
             }, {
             '$inc' : {
                 'count' : 1, 'total' : 1
@@ -201,12 +202,12 @@ class Comment(DictLike):
             upsert=True)
 
     def __updatedictionary__(self, gram, n, str_type):
-        dictionary = c[str_type.__name__][str(n) + 'gram']
-        counters = c['Counter'][str(n) + 'gram']
+        dictionary = c['Dictionary'][str_type.__name__]
+        counters = c['Counter'][str_type.__name__]
         cooked_gram = ' '.join([item.cooked for item in gram])
-        if not dictionary.find_one({'term' : cooked_gram}):
+        if not dictionary.find_one({'term' : cooked_gram, 'n' : n}):
             id_counter = counters.find_one_and_update({
-            'str_type' : str_type.__name__,
+            'n' : n,
             },
             {
             '$inc' : {
@@ -215,33 +216,37 @@ class Comment(DictLike):
             }, return_document=True)
             if id_counter:
                 dictionary.insert_one({
-                '_id' : id_counter['counter'],
-                'term' : cooked_gram
+                'ix' : id_counter['counter'],
+                'term' : cooked_gram,
+                'n' : n
                 })
             else:
                 counters.insert_one({
-                'str_type' : str_type.__name__,
+                'n' : n,
                 'counter' : 0
                 })
                 dictionary.insert_one({
-                '_id' : 0,
-                'term' : cooked_gram
+                'ix' : 0,
+                'term' : cooked_gram,
+                'n' : n
                 })
 
-    def __updatecollection__(self):
-        collection = c[type(self).__name__][self['source']]
+    def __updatecomment__(self):
+        collection = c['Comment'][self['source']]
         document = deepcopy(self.data)
         for str_type in self.str_classes:
             document[str_type.__name__] = [string_like.__totuple__() for string_like in self[str_type.__name__]]
         collection.insert_one(document)
 
     def insert(self):
-        self.__updatecollection__()
+        self.__updatecomment__()
         for n in self.n_list:
             for str_type in self.str_classes:
                 for gram in ngrams(self[str_type.__name__], n):
                     self.__updatedictionary__(gram, n, str_type)
                     self.__updatebody__(gram, n, str_type)
+
+    # TODO def read(self):
 
 
 # Array classes
@@ -256,7 +261,7 @@ class ArrayLike(object):
         self.n = n
         assert str_type in [subclass.__name__ for subclass in StringLike.__subclasses__()]
         self.str_type = str_type
-        self.dictionary = c[str_type][str(n) + 'gram']
+        self.dictionary = c['Dictionary'][self.str_type]
 
     def __add__(self, other):
         if isinstance(other, int) | isinstance(other, float):
@@ -302,11 +307,9 @@ class ArrayLike(object):
             raise TypeError("Expected str, StringLike, or tuple of StringLikes")
         ix = self.dictionary.find_one(
         {
-            'term' : key
-        }, {
-            '_id' : 1
-            }
-        )['_id']
+            'term' : key,
+            'n' : self.n
+        })['ix']
         return ix
 
     def __iter__(self):
@@ -372,7 +375,7 @@ class Vector(ArrayLike):
         self.count_type = count_type
         self.start_date = start_date
         self.stop_date = stop_date
-        self.collection = c[str_type][source]
+        self.collection = c['Body'][source]
         self.__fromdb__()
 
     def __fromdb__(self):
@@ -383,6 +386,7 @@ class Vector(ArrayLike):
 
     def __fromcache__(self):
         result = self.collection.find_one({
+            'n' : self.n,
             'start_date' : self.start_date,
             'stop_date' : self.stop_date,
             self.count_type : {
@@ -404,7 +408,8 @@ class Vector(ArrayLike):
             'date' : {
                 '$gt' : self.start_date, '$lt' : self.stop_date
             },
-            'n' : self.n
+            'n' : self.n,
+            'str_type' : self.str_type
         }):
             ix = counts.__getix__(document['term'])
             counts[ix] = document['count']

@@ -3,39 +3,72 @@
 import pymongo
 from redicorpus.celery import app
 
-ngram_collections = ['1gram', '2gram', '3gram']
-str_databases = ['String', 'Stem', 'Lemma']
+str_collections = ['String', 'Stem', 'Lemma']
+source_collections = ['Askreddit']
 
 # Initializing Mongo Databases
 
 c = pymongo.MongoClient()
 
-for collection in ngram_collections:
+for collection in str_collections:
+
+    # Initialize counter
     try:
         c['Counter'].create_collection(collection,w=2)
     except pymongo.errors.CollectionInvalid:
         pass
     c['Counter'][collection].create_indexes([
         pymongo.IndexModel(
-            [('str_type', pymongo.TEXT)], unique=True, background=False
+            [('n', pymongo.ASCENDING)], unique=True, background=False
         )
     ])
 
-for database in str_databases:
-    for collection_name in ngram_collections:
-        try:
-            c[database].create_collection(collection, w=2)
-        except pymongo.errors.CollectionInvalid:
-            pass
-        c[database][collection].create_indexes([
-            pymongo.IndexModel(
-                [('_id', pymongo.ASCENDING)], unique=True, background=False
-            ),
-            pymongo.IndexModel(
-                [('term', pymongo.TEXT)], unique=True, background=False
-            )
-        ])
+    # Initialize dictionary
+    try:
+        c['Dictionary'].create_collection(collection, w=2)
+    except pymongo.errors.CollectionInvalid:
+        pass
+    c['Dictionary'][collection].create_indexes([
+        pymongo.IndexModel(
+            [('ix', pymongo.ASCENDING), ('n', pymongo.ASCENDING)], unique=False, background=False
+        ),
+        pymongo.IndexModel(
+            [('term', pymongo.TEXT)], unique=False, background=False
+        )
+    ])
 
+for collection in source_collections:
+
+    # Initialize comments
+    try:
+        c['Comment'].create_collection(collection, j=True)
+    except pymongo.errors.CollectionInvalid:
+        pass
+    c['Comment'][collection].create_indexes([
+        pymongo.IndexModel(
+            [('_id', pymongo.TEXT)], unique=True, background=True
+        ),
+        pymongo.IndexModel(
+            [('date', pymongo.DESCENDING)], unique=False, background=True
+        )
+    ])
+
+    # Initialize corpora
+    try:
+        c['Body'].create_collection(collection, j=True)
+    except pymongo.errors.CollectionInvalid:
+        pass
+    c['Body'][collection].create_indexes([
+        pymongo.IndexModel(
+            [('term', pymongo.TEXT)], unique=False, background=True
+        ),
+        pymongo.IndexModel(
+            [('date', pymongo.DESCENDING)], unique=False, background=True
+        ),
+        pymongo.IndexModel(
+            [('n', pymongo.ASCENDING)], unique=False, background=True
+        )
+    ])
 
 # Checking celery
 
