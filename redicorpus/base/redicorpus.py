@@ -77,7 +77,8 @@ class Stem(StringLike):
 
     def __init__(self, data, pos=None):
         super(Stem, self).__init__(data, pos)
-        self.cooked = self.stemmer(data)
+        if isinstance(data, str):
+            self.cooked = self.stemmer(data)
 
     def __class__(self):
         return "Stem"
@@ -91,7 +92,8 @@ class Lemma(StringLike):
 
     def __init__(self, data, pos=None):
         super(Lemma, self).__init__(data, pos)
-        self.cooked = self.lemmer(data, self.pos)
+        if isinstance(data, str):
+            self.cooked = self.lemmer(data, self.pos)
 
     def __class__(self):
         return "Lemma"
@@ -165,12 +167,25 @@ class Comment(DictLike):
     def __init__(self, data):
         super(Comment, self).__init__()
         if isinstance(data, dict):
-            self.__fromdict__(data)
+            if 'String' in data:
+                self.__fromdocument__(data)
+            else:
+                self.__fromdict__(data)
         for str_type in self.str_classes:
             self[str_type.__name__] = tokenize.apply(args=[self['raw'], str_type]).result
 
     def __class__(self):
         return "Comment"
+
+    def __fromdocument__(self, data):
+        str_type_list = StringLike.__subclasses__()
+        key_list = [subclass.__name__ for subclass in str_type_list]
+        for subclass, key in zip(str_type_list, key_list):
+            self.data[key] = [subclass(tuple(item)) for item in data[key]]
+        for key in data:
+            if key not in key_list:
+                self.data[key] = data.get(key)
+
 
     def __updatebody__(self, gram, n, str_type):
         collection = c['Body'][self['source']]
@@ -245,9 +260,6 @@ class Comment(DictLike):
                 for gram in ngrams(self[str_type.__name__], n):
                     self.__updatedictionary__(gram, n, str_type)
                     self.__updatebody__(gram, n, str_type)
-
-    # TODO def read(self):
-
 
 # Array classes
 

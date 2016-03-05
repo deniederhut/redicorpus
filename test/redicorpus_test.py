@@ -37,6 +37,8 @@ def test_comment():
     assert len(comment)
     assert comment['_id'] == 'd024gzv'
     r = comment.insert()
+    document = c['Comment']['test'].find_one()
+    assert isinstance(rc.Comment(document)['Lemma'][0], rc.Lemma)
 
 def test_update_body():
     for str_type in str_type_list:
