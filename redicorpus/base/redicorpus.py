@@ -388,6 +388,7 @@ class Vector(ArrayLike):
         self.start_date = start_date
         self.stop_date = stop_date
         self.collection = c['Body'][source]
+        self.cache = c['BodyCache'][source]
         self.__fromdb__()
 
     def __fromdb__(self):
@@ -397,7 +398,7 @@ class Vector(ArrayLike):
             self.__fromcursor__()
 
     def __fromcache__(self):
-        result = self.collection.find_one({
+        result = self.cache.find_one({
             'n' : self.n,
             'start_date' : self.start_date,
             'stop_date' : self.stop_date,
@@ -440,7 +441,7 @@ class Vector(ArrayLike):
         self.__tocache__()
 
     def __tocache__(self):
-        self.collection.update_one({
+        self.cache.update_one({
             'start_date' : self.start_date,
             'stop_date' : self.stop_date
         }, {
