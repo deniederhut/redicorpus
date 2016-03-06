@@ -3,14 +3,11 @@
 import pymongo
 from redicorpus.celery import app
 
-str_collections = ['String', 'Stem', 'Lemma']
-source_collections = ['Askreddit']
-
 # Initializing Mongo Databases
 
 c = pymongo.MongoClient()
 
-for collection in str_collections:
+for collection in c['Counter'].collection_names():
 
     # Initialize counter
     try:
@@ -37,7 +34,7 @@ for collection in str_collections:
         )
     ])
 
-for collection in source_collections:
+for collection in c['Comment'].collection_names():
 
     # Initialize comments
     try:
