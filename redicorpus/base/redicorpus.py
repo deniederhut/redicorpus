@@ -440,7 +440,7 @@ class Vector(ArrayLike):
     @staticmethod
     def activation(users):
         inverse_total_users = len(Vector.unique(users)) ** -1
-        users = ArrayLike([len(item) for item in users])
+        users = ArrayLike([Vector.length(item) for item in users])
         return users * inverse_total_users
 
     @staticmethod
@@ -452,7 +452,7 @@ class Vector(ArrayLike):
     def tfidf(counts, documents):
         tf = ArrayLike(Vector.tf(counts))
         inverse_total_documents = len(Vector.unique(documents)) ** -1
-        documents = ArrayLike([len(item) for item in documents])
+        documents = ArrayLike([Vector.length(item) for item in documents])
         idf = ArrayLike([ log( (item + 1) * inverse_total_documents ) for item in documents])
         return tf * idf
 
@@ -460,8 +460,17 @@ class Vector(ArrayLike):
     def unique(array_like):
         total_set = set()
         for sub_list in array_like.data:
+            if not sub_list:
+                sub_list = set()
             total_set = total_set | set(sub_list)
         return total_set
+
+    @staticmethod
+    def length(list_like):
+        try:
+            return len(list_like)
+        except TypeError:
+            return 0
 
 
 class Map(ArrayLike):
