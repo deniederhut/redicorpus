@@ -229,22 +229,11 @@ class Comment(DictLike):
                 'counter' : 1
                 }
             }, return_document=True)
-            if id_counter:
-                dictionary.insert_one({
-                'ix' : id_counter['counter'],
-                'term' : cooked_gram,
-                'n' : n
-                })
-            else:
-                counters.insert_one({
-                'n' : n,
-                'counter' : 0
-                })
-                dictionary.insert_one({
-                'ix' : 0,
-                'term' : cooked_gram,
-                'n' : n
-                })
+            dictionary.insert_one({
+            'ix' : id_counter['counter'],
+            'term' : cooked_gram,
+            'n' : n
+            })
 
     def __updatecomment__(self):
         collection = c['Comment'][self['source']]
@@ -426,8 +415,8 @@ class Vector(ArrayLike):
         }):
             ix = counts.__getix__(document['term'])
             counts[ix] = document['count']
-            documents[ix] = document['documents']
-            users[ix] = document['users']
+            documents[ix] = set(document['documents'])
+            users[ix] = set(document['users'])
         if self.count_type == 'activation':
             self.data = self.activation(users)
         elif self.count_type == 'count':
