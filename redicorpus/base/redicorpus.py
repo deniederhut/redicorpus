@@ -10,7 +10,9 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
+from pymongo.errors import DuplicateKeyError
 from redicorpus import c, app
+import warnings
 
 
 # String classes
@@ -240,15 +242,20 @@ class Comment(DictLike):
         document = deepcopy(self.data)
         for str_type in self.str_classes:
             document[str_type.__name__] = [string_like.__totuple__() for string_like in self[str_type.__name__]]
-        collection.insert_one(document)
+        return collection.insert_one(document)
 
     def insert(self):
-        self.__updatecomment__()
-        for n in self.n_list:
-            for str_type in self.str_classes:
-                for gram in ngrams(self[str_type.__name__], n):
-                    self.__updatedictionary__(gram, n, str_type)
-                    self.__updatebody__(gram, n, str_type)
+        success = False
+        try:
+            success = self.__updatecomment__()
+        except DuplicateKeyError:
+            warnings.warn("Not Implemented : id={} already in collection".format(self['_id']))
+        if success:
+            for n in self.n_list:
+                for str_type in self.str_classes:
+                    for gram in ngrams(self[str_type.__name__], n):
+                        self.__updatedictionary__(gram, n, str_type)
+                        self.__updatebody__(gram, n, str_type)
 
 # Array classes
 

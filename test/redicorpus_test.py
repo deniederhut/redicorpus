@@ -36,7 +36,8 @@ def test_comment():
     assert isinstance(comment, rc.DictLike)
     assert len(comment)
     assert comment['_id'] == 'd024gzv'
-    r = comment.insert()
+    comment.insert()
+    comment.insert()
     document = c['Comment']['test'].find_one()
     assert isinstance(rc.Comment(document)['Lemma'][0], rc.Lemma)
 
