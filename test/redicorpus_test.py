@@ -85,6 +85,5 @@ def test_map():
 
 def test_cleanup():
     for database in c.database_names():
-        if database not in ['local']:
-            for collection in c[database].collection_names():
-                c[database].drop_collection(collection)
+        if database not in ['local', 'admin', 'test']:
+            c.drop_database(database)
