@@ -81,16 +81,17 @@ trigrams = json.loads(f)
 # Inserting most common ngrams
 for str_type in STR_TYPE_LIST:
     for n, stopword_list in zip([1,2,3], [unigrams, bigrams, trigrams]):
-        for ix, term in enumerate(stopword_list):
-            c['Dictionary'][str_type].insert_one({
-                'ix' : ix,
-                'term' : term,
-                'n' : n
+        if not c['Counter'][str_type].find_one({'n' : n}):
+            for ix, term in enumerate(stopword_list):
+                c['Dictionary'][str_type].insert_one({
+                    'ix' : ix,
+                    'term' : term,
+                    'n' : n
+                })
+            c['Counter'][str_type].insert_one({
+                'n' : n,
+                'counter' : len(stopword_list) - 1
             })
-        c['Counter'][str_type].insert_one({
-            'n' : n,
-            'counter' : len(stopword_list) - 1
-        })
 
 # Checking celery
 
