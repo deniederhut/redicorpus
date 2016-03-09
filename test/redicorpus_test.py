@@ -13,6 +13,14 @@ str_type_list = ['String', 'Stem', 'Lemma']
 
 def test_string():
     obj = rc.String('fried')
+    assert str(obj) == 'fried'
+    assert len(obj) == 5
+    assert obj + ' pickles' == 'fried pickles'
+    assert obj * 2 == 'friedfried'
+    new_obj = []
+    for item in obj:
+        new_obj.append(item)
+    assert new_obj == ['f', 'r', 'i', 'e', 'd']
     assert obj.__totuple__() == ('fried', 'fried', 'VBN', 'String')
 
 def test_stem():
@@ -24,8 +32,13 @@ def test_lemma():
     assert obj.__totuple__() == ('fry', 'fried', 'VBN', 'Lemma')
 
 def test_dict_like():
+    with pytest.raises(TypeError):
+        rc.DictLike().__fromdict__('blue')
+    with pytest.raises(ValueError):
+        rc.DictLike().__fromdict__({'raw' : 'blue'})
     obj = rc.DictLike()
     obj['test'] = 42
+    assert dict(obj)
     assert list(obj.items()) == [('test', 42)]
 
 def test_comment():
@@ -36,6 +49,10 @@ def test_comment():
     assert isinstance(comment, rc.DictLike)
     assert len(comment)
     assert comment['_id'] == 'd024gzv'
+    assert dict(comment)
+    assert str(comment)
+    assert comment.keys()
+    assert comment.values()
     comment.insert()
     comment.insert()
     document = c['Comment']['test'].find_one()
@@ -63,7 +80,10 @@ def test_update_source():
     assert document
 
 def test_array_like():
+    with pytest.raises(ValueError):
+        rc.ArrayLike(n=1, str_type='Frayed')
     array = rc.ArrayLike([1,2,3,4], 1, 'String')
+    assert str(array)
     assert array.n == 1
     assert array + 1 == [2, 3, 4, 5]
     assert array + rc.ArrayLike([0, 1], 1, 'String') == [2, 4, 4, 5]
@@ -71,15 +91,23 @@ def test_array_like():
     assert array * rc.ArrayLike([0, 1], 1, 'String') == [0, 6, 0, 0]
     assert 2 in array
     assert array['the']
+    array['the'] = 1
+    assert array[rc.String('the')]
 
 def test_vector():
+    with pytest.raises(ValueError):
+        rc.Vector(n=1, str_type='String', count_type='Lemma', source='Blue')
+    with pytest.raises(ValueError):
+        rc.Vector(n=1, str_type='Frayed', count_type='Lemma', source='test')
+    with pytest.raises(TypeError):
+        rc.Vector(n=1, str_type='String', count_type='Lemma', source='test', start_date='now')
     for count_type in count_type_list:
         for gram_length in gram_length_list:
             for str_type in str_type_list:
                 vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
                 assert vector.n == gram_length
                 assert vector.start_date == datetime(1970, 1, 1, 0, 0)
-                assert len(vector) >= 42
+                assert len(vector) >= 100
 
 def test_map():
     pass
