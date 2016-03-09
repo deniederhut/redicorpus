@@ -4,6 +4,7 @@ import json
 from pkg_resources import resource_string
 import pymongo
 from redicorpus.celery import app
+import warnings
 
 # Global variables for __init__
 STR_TYPE_LIST = ['String', 'Stem', 'Lemma']
@@ -98,4 +99,5 @@ for str_type in STR_TYPE_LIST:
 @app.task
 def celery_running():
     return True
-assert celery_running.apply().result
+if not celery_running.apply().result:
+    warnings.warn("Celery backend is not currently running\nSome functions may not behave as expected")

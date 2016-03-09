@@ -145,8 +145,10 @@ class DictLike(object):
         return str(self.data)
 
     def __fromdict__(self, data):
-        assert isinstance(data, dict)
-        assert '_id' in data
+        if not isinstance(data, dict):
+            raise TypeError("Expected dict, not {}".format(type(data)))
+        if '_id' not in data:
+            raise ValueError("Comments must have an '_id' field")
         for key in data:
             self.data[key] = data.get(key)
 
@@ -267,7 +269,8 @@ class ArrayLike(object):
         if data:
             self.data = data
         self.n = n
-        assert str_type in [subclass.__name__ for subclass in StringLike.__subclasses__()]
+        if str_type not in [subclass.__name__ for subclass in StringLike.__subclasses__()]:
+            raise ValueError("{} is not a valid string type class".format(str_type))
         self.str_type = str_type
         self.dictionary = c['Dictionary'][self.str_type]
 
@@ -374,11 +377,14 @@ class Vector(ArrayLike):
 
     def __init__(self, n, str_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
         super(Vector, self).__init__(n=n, str_type=str_type)
-        assert source in c['Comment'].collection_names()
-        assert str_type in [string_like.__name__ for string_like in StringLike.__subclasses__()]
+        if source not in c['Comment'].collection_names():
+            raise ValueError("{} is not a collection in the Comment database".format(source))
+        if str_type not in [string_like.__name__ for string_like in StringLike.__subclasses__()]:
+            raise ValueError("{} is not a valid string type class".format(str_type))
         for date in [start_date, stop_date]:
             if date:
-                assert isinstance(date, datetime)
+                if not isinstance(date, datetime):
+                    raise TypeError("{} is not a datetime.datetime object".format(date))
 
         self.count_type = count_type
         self.start_date = start_date
@@ -485,8 +491,10 @@ class Map(ArrayLike):
 
     def __init__(self, term, source, data=None, position=0, time_stamp=None, time_delta=None):
         super(Map, self).__init__()
-        assert isinstance(term, StringLike)
-        assert source in c.database_names()
+        if not isinstance(term, StringLike):
+            raise TypeError("{} must be a string like class".format(term))
+        if source not in c.database_names():
+            raise ValueError("{} database not found")
 
         self.term = term
         self.time_stamp = time_stamp
