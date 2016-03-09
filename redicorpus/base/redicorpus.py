@@ -382,9 +382,8 @@ class Vector(ArrayLike):
         if str_type not in [string_like.__name__ for string_like in StringLike.__subclasses__()]:
             raise ValueError("{} is not a valid string type class".format(str_type))
         for date in [start_date, stop_date]:
-            if date:
-                if not isinstance(date, datetime):
-                    raise TypeError("{} is not a datetime.datetime object".format(date))
+            if not isinstance(date, datetime):
+                raise TypeError("{} is not a datetime.datetime object".format(date))
 
         self.count_type = count_type
         self.start_date = start_date
