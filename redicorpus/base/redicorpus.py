@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
-from redicorpus import c, app
+from redicorpus import c
+from redicorpus.celery import app
 import warnings
 
 

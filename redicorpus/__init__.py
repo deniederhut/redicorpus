@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
+from celery.task.control import inspect
 import json
 from pkg_resources import resource_string
 import pymongo
-from redicorpus.celery import app
 import warnings
 
 # Global variables for __init__
 STR_TYPE_LIST = ['String', 'Stem', 'Lemma']
 
-# Initializing MongoDB connection
+# ---
+# Initializing MongoDB
+# ---
+
 c = pymongo.MongoClient(j=True)
 
 # Set strict write concerns and indices for dictionaries and their counters
@@ -94,10 +97,19 @@ for str_type in STR_TYPE_LIST:
                 'counter' : len(stopword_list) - 1
             })
 
+# ---
 # Checking celery
+# ---
 
-@app.task
-def celery_running():
-    return True
-if not celery_running.apply().result:
-    warnings.warn("Celery backend is not currently running\nSome functions may not behave as expected")
+try:
+    stats = inspect().stats()
+    if stats:
+        celery_name = list(stats.keys())[0]
+        num_workers = stats[celery_name]['pool']['max-concurrency']
+        if num_workers == 0:
+            warnings.warn("Celery is running without workers\nSome functions may not behave as expected")
+    else:
+        warnings.warn("Celery is not running\nSome functions may not behave as expected")
+except OSError as e:
+    if "Connection refused" in e.args[0].args:
+        warnings.warn("Celery broker is not running\nSome functions may not behave as expected")
