@@ -289,9 +289,10 @@ class ArrayLike(object):
         return "ArrayLike"
 
     def __contains__(self, key):
-        if self.__getitem__(key):
+        try:
+            self.__getitem__(key)
             return True
-        else:
+        except TypeError:
             return False
 
     def __forcelen__(self, length):
