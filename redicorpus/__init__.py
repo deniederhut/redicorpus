@@ -111,5 +111,10 @@ try:
     else:
         warnings.warn("Celery is not running\nSome functions may not behave as expected")
 except OSError as e:
-    if "Connection refused" in e.args[0].args:
-        warnings.warn("Celery broker is not running\nSome functions may not behave as expected")
+    if "Socket closed" in e.args[0]:
+        warnings.warn("Connection to Celery broker is closed\nTry restarting broker")
+    if isinstance(e.args[0], BaseException):
+        if "Connection refused" in e.args[0].args:
+            warnings.warn("Celery broker is not running\nSome functions may not behave as expected")
+    else:
+        raise
