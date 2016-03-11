@@ -41,7 +41,7 @@ before_install :
     - sudo ln -s /run/shm /dev/shm
 
 install :
-    - sudo apt-get install openssl gfortran
+    - sudo apt-get --yes install openssl gfortran
     - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
     - pip install -r requirements.txt
     - python etc/nltk_helper.py
