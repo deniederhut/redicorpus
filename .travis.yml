@@ -1,5 +1,5 @@
 language : python
-sudo : true
+sudo : required
 cache : false
 python :
     - 3.4
