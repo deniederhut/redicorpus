@@ -1,9 +1,5 @@
 language : python
-sudo : required
 cache : false
-python :
-    - 3.4
-    - 3.5
 
 services :
     - mongodb
@@ -15,6 +11,25 @@ addons:
     - mongodb-3.0-precise
     packages:
     - mongodb-org-server
+
+matrix :
+    include :
+        - os : linux
+          dist : precise
+          sudo : required
+          python : 3.4
+        - os : linux
+          dist : trusty
+          sudo : required
+          python : 3.4
+        - os : linux
+          dist : precise
+          sudo : required
+          python : 3.5
+        - os : linux
+          dist : trusty
+          sudo : required
+          python : 3.5
 
 before_install :
     - wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh
