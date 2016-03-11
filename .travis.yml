@@ -33,6 +33,7 @@ install :
 
 before_script :
     - celery -A redicorpus worker &
+    - sleep 15
 
 script : py.test
 
