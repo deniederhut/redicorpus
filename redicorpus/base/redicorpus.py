@@ -581,15 +581,9 @@ def get_body(source, n=1, str_type='String', count_type='count', start_date=date
     """Retrieve counts by date and type"""
     return Vector(source, n, str_type, count_type, start_date, stop_date)
 
-def get_map():
+def get_map(term, source, n, position=0, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
     """Retrieve pre-computed map"""
-    pass
-    # initialize map object
-    # if object in db:
-    #     return object with data
-    # else:
-    #     build map
-    #     return map
+    return Map(term, source, n, position, start_date, stop_date)
 
 def zipf_test(x, y=None):
     """Conduct one-way or two-way Zipf test on ArrayLike objects"""
