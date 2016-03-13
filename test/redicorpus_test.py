@@ -80,7 +80,7 @@ def test_update_source():
     assert document
 
 def test_get_comment():
-    comment = rc.get_comment('test','d024gzv')
+    comment = rc.get_comment('d024gzv', 'test')
     assert comment
 
 def test_array_like():
@@ -119,10 +119,10 @@ def test_get_body():
     assert vector
 
 def test_map():
-    mapping = rc.Map('term'='proof', source='test')
+    mapping = rc.Map(term=rc.String('proof'), source='test', n=1)
 
 def test_get_map():
-    rc.get_map()
+    rc.get_map(term=rc.String('proof'), source='test', n=1)
 
 def test_zipf_test():
     rc.zipf_test(rc.ArrayLike())

@@ -533,7 +533,7 @@ class Map(ArrayLike):
     def __fromcursor__(self):
         self.data = []
         for document in c['Body'][self.source].find({
-            'term' : self.term
+            'term' : self.term,
             'date' : {'$gt' : self.start_time, '$lt' : self.stop_time},
             'str_type' : self.str_type,
             'n' : self.n
