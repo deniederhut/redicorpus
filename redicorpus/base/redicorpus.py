@@ -560,9 +560,13 @@ class Map(ArrayLike):
 def tokenize(string, str_type):
     return [str_type(token, pos) for token, pos in pos_tag(word_tokenize(string.lower()))]
 
-def get_comment():
+def get_comment(source, _id):
     """Retrieve comment from db"""
-    pass
+    document = c['Comment'][source].find_one({'_id' : _id})
+    if document:
+        return Comment(document)
+    else:
+        return None
     # initialize comment object
     # return object with data
 

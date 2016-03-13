@@ -79,6 +79,10 @@ def test_update_source():
     document = c['Comment']['test'].find_one({'_id' : "d024gzv"})
     assert document
 
+def test_get_comment():
+    comment = rc.get_comment('test','d024gzv')
+    assert comment
+
 def test_array_like():
     with pytest.raises(ValueError):
         rc.ArrayLike(n=1, str_type='Frayed')
