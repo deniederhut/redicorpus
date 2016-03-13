@@ -541,7 +541,7 @@ class Map(ArrayLike):
         'documents' : 1
         }):
             for _id in document['documents']:
-                comment = get_comment(self.source, _id)
+                comment = get_comment(_id, self.source)
                 ngram_list = comment[str_type]
                 if self.position:
                     loc = ngram_list.index(term) + position
@@ -569,7 +569,7 @@ class Map(ArrayLike):
 def tokenize(string, str_type):
     return [str_type(token, pos) for token, pos in pos_tag(word_tokenize(string.lower()))]
 
-def get_comment(source, _id):
+def get_comment(_id, source):
     """Retrieve comment from db"""
     document = c['Comment'][source].find_one({'_id' : _id})
     if document:
