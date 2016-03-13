@@ -118,8 +118,11 @@ def test_get_body():
     vector = rc.get_body(source='test', start_date=datetime(2016,2,16), stop_date=datetime(2016,2,17))
     assert vector
 
-def test_map():
-    pass
+def test_get_map():
+    rc.get_map()
+
+def test_zipf_test():
+    rc.zipf_test(rc.ArrayLike())
 
 def test_cleanup():
     for database in c.database_names():
