@@ -575,7 +575,7 @@ def get_comment(source, _id):
     if document:
         return Comment(document)
     else:
-        return None
+        raise FileNotFoundError("No comment with id {} from source {}".format(_id, source))
 
 def get_body(source, n=1, str_type='String', count_type='count', start_date=datetime.utcnow(), stop_date=datetime.utcnow()):
     """Retrieve counts by date and type"""
