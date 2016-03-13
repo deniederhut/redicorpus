@@ -490,68 +490,77 @@ class Vector(ArrayLike):
 class Map(ArrayLike):
     """Conditional probability map for a single term"""
 
-    def __init__(self, term, source, data=None, position=0, time_stamp=None, time_delta=None):
-        super(Map, self).__init__()
-        if not isinstance(term, StringLike):
-            raise TypeError("{} must be a string like class".format(term))
-        if source not in c.database_names():
-            raise ValueError("{} database not found")
+    def __init__(self, term, source, n, position=0, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+        super(Map, self).__init__(n=n)
+        if isinstance(term, tuple):
+            if isinstance(term[0], StringLike):
+                self.str_type = term[0].__class__()
+                self.term = ' '.join(term)
+            else:
+                raise TypeError("{} must be a string like class".format(term))
+        else:
+            if isinstance(term, StringLike):
+                self.str_type = term.__class__()
+            else:
+                raise TypeError("{} must be a string like or tuple".format(term))
+        if source not in c['Comment'].collection_names():
+            raise ValueError("{} is not a collection in Comment")
 
         self.term = term
-        self.time_stamp = time_stamp
-        self.time_delta = time_delta
+        self.start_date = start_date
+        self.stop_date = stop_date
         self.position = position
-        self.collection = c['Map'][source]
+        self.n = n
+        self.source = source
 
-        if data:
-            self.__from_dict(data)
-        if not data:
-            if time_stamp:
-                try:
-                    self.__from_maps(term, position, time_stamp, time_delta)
-                except IndexError:
-                    self.__from_comments()
-            else:
-                self.__from_comments()
-
-    def __from_maps(self, term, position, time_stamp, time_delta):
+    def __fromdb__(self):
         try:
-            self.__from_dict(self.collection.find_one({
-            'term' : term,
-            'position' : position,
-            'time_stamp' : time_stamp,
-            'time_delta' : time_delta
-            }))
-        except:
-            raise IndexError("Document does not exist in collection")
+            self.__fromcollection__()
+        except FileNotFoundError:
+            self.__fromcursor__()
 
-    def __from_comments(self):
-        # TODO support for ngrams
-        for document in self.collection.find({
-        'date' : {
-            start_time : {'$gt' : self.start_time},
-            stop_time : {'$lt' : self.stop_time}
-            }
+    def __fromcollection__(self):
+        try:
+            self.data = c['Map'][self.source].find_one({
+                'term' : self.term,
+                'position' : self.position,
+                'start_date' : self.start_date,
+                'stop_date' : self.stop_date
+            })['probabilities']
+        except TypeError:
+            raise FileNotFoundError
+
+    def __fromcursor__(self):
+        self.data = []
+        for document in c['Body'][self.source].find({
+            'term' : self.term
+            'date' : {'$gt' : self.start_time, '$lt' : self.stop_time},
+            'str_type' : self.str_type,
+            'n' : self.n
         }, {
-        type(term) : 1
+        'documents' : 1
         }):
-            array = Comment(document).tokenize(type(term))
-            if position:
-                ix = array.index(term) + position
-                try:
-                    self[array[ix]] += 1
-                except IndexError:
-                    pass
-            else:
-                array.remove(term)
-                for gram in array:
-                    self[gram] += 1
+            for _id in document['documents']:
+                comment = get_comment(self.source, _id)
+                ngram_list = comment[str_type]
+                if self.position:
+                    loc = ngram_list.index(term) + position
+                    self[' '.join(ngram_list[loc])] + 1
+                else:
+                    ngram_list = comment[str_type].remove(term)
+                    for ngram in ngram_list:
+                        self[' '.join(ngram)] + 1
+        self * (sum(self) ** -1)
+        self.__tocollection__()
 
-    def __from_dict(self, data):
-        self.data = data[type(term)]
-        self.time_stamp = data['time_stamp']
-        self.time_delta = data['time_delta']
-        self.position = data['position']
+        def __tocollection__(self):
+            c['Body'][source].update_one({
+            'term' : self.term,
+            'position' : self.position,
+            'start_date' : self.start_date,
+            'stop_date' : self.stop_date,
+            'probabilities' : self.data,
+            })
 
 
 # Module functions

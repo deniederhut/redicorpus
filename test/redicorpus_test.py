@@ -118,6 +118,9 @@ def test_get_body():
     vector = rc.get_body(source='test', start_date=datetime(2016,2,16), stop_date=datetime(2016,2,17))
     assert vector
 
+def test_map():
+    mapping = rc.Map('term'='proof', source='test')
+
 def test_get_map():
     rc.get_map()
 
