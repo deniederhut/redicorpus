@@ -377,7 +377,7 @@ class Vector(ArrayLike):
     count type, gram length, and time period
     """
 
-    def __init__(self, n, str_type, count_type, source, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+    def __init__(self, source, n, str_type, count_type, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
         super(Vector, self).__init__(n=n, str_type=str_type)
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in the Comment database".format(source))
@@ -567,14 +567,10 @@ def get_comment(source, _id):
         return Comment(document)
     else:
         return None
-    # initialize comment object
-    # return object with data
 
-def get_body():
+def get_body(source, n=1, str_type='String', count_type='count', start_date=datetime.utcnow(), stop_date=datetime.utcnow()):
     """Retrieve counts by date and type"""
-    pass
-    # initialize body object
-    # return object with data
+    return Vector(source, n, str_type, count_type, start_date, stop_date)
 
 def get_map():
     """Retrieve pre-computed map"""
