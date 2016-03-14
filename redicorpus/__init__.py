@@ -13,7 +13,9 @@ STR_TYPE_LIST = ['String', 'Stem', 'Lemma']
 # Initializing MongoDB
 # ---
 
-c = pymongo.MongoClient(j=True)
+c = pymongo.MongoClient()
+# Even though j=True is the default for Mongo, setting this explicitly
+# causes travis builds to fail
 
 # Set strict write concerns and indices for dictionaries and their counters
 for collection in STR_TYPE_LIST:
