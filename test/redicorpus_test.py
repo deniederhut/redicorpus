@@ -115,7 +115,7 @@ def test_vector():
                 assert len(vector) >= 100
 
 def test_get_body():
-    vector = rc.get_body(source='test', start_date=datetime(2016,2,16), stop_date=datetime(2016,2,17))
+    vector = rc.get_body(source='test', start_date=datetime(2016,2,15), stop_date=datetime(2016,2,18))
     assert vector
 
 def test_map():
