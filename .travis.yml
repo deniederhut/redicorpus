@@ -45,6 +45,7 @@ install :
     - conda install --yes python=$TRAVIS_PYTHON_VERSION numpy scipy
     - pip install -r requirements.txt
     - python etc/nltk_helper.py
+    - python setup.py install
 
 before_script :
     - celery -A redicorpus worker &
