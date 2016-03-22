@@ -6,8 +6,9 @@ building, and querying.
 Built on MongoDB, Celery, and NLTK
 """
 
+from arrow import Arrow, utcnow
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import datetime
 from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
@@ -377,7 +378,7 @@ class Vector(ArrayLike):
     count type, gram length, and time period
     """
 
-    def __init__(self, source, n, str_type, count_type, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+    def __init__(self, source, n, str_type, count_type, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
         super(Vector, self).__init__(n=n, str_type=str_type)
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in the Comment database".format(source))
@@ -490,7 +491,7 @@ class Vector(ArrayLike):
 class Map(ArrayLike):
     """Conditional probability map for a single term"""
 
-    def __init__(self, term, source, n, position=0, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+    def __init__(self, term, source, n, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
         super(Map, self).__init__(n=n)
         if isinstance(term, tuple):
             if isinstance(term[0], StringLike):
@@ -577,11 +578,11 @@ def get_comment(_id, source):
     else:
         raise FileNotFoundError("No comment with id {} from source {}".format(_id, source))
 
-def get_body(source, n=1, str_type='String', count_type='count', start_date=datetime.utcnow(), stop_date=datetime.utcnow()):
+def get_body(source, n=1, str_type='String', count_type='count', start_date=utcnow().datetime, stop_date=utcnow().datetime):
     """Retrieve counts by date and type"""
     return Vector(source, n, str_type, count_type, start_date, stop_date)
 
-def get_map(term, source, n, position=0, start_date=datetime(1970,1,1), stop_date=datetime.utcnow()):
+def get_map(term, source, n, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
     """Retrieve pre-computed map"""
     return Map(term, source, n, position, start_date, stop_date)
 
