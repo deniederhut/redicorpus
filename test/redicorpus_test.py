@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from arrow import Arrow
 from datetime import datetime
 import json
 import pytest
@@ -111,7 +112,7 @@ def test_vector():
             for str_type in str_type_list:
                 vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
                 assert vector.n == gram_length
-                assert vector.start_date == datetime(1970, 1, 1, 0, 0)
+                assert vector.start_date == Arrow(1970, 1, 1, 0, 0).datetime
                 assert len(vector) >= 100
 
 def test_get_body():
