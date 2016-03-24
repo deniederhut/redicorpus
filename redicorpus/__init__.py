@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import absolute_import
+
 from celery.task.control import inspect
 import json
 from pkg_resources import resource_string

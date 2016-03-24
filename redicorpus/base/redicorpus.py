@@ -6,6 +6,8 @@ building, and querying.
 Built on MongoDB, Celery, and NLTK
 """
 
+from __future__ import absolute_import
+
 from arrow import Arrow, utcnow
 from copy import deepcopy
 from datetime import datetime
