@@ -63,6 +63,9 @@ before_script :
 
 script : py.test
 
+after_success :
+    - codecov
+
 notifications :
     email :
         recipients :
