@@ -61,7 +61,7 @@ before_script :
     - celery -A redicorpus worker &
     - sleep 15
 
-script : py.test
+script : py.test --cov=redicorpus
 
 after_success :
     - codecov
