@@ -3,7 +3,7 @@ Title : redicorpus
 Author : Dillon Niederhut
 ---
 
-[![Build Status](https://travis-ci.org/deniederhut/redicorpus.svg?branch=master)](https://travis-ci.org/deniederhut/redicorpus)
+[![Build Status](https://travis-ci.org/deniederhut/redicorpus.svg?branch=master)](https://travis-ci.org/deniederhut/redicorpus)  [![codecov.io](https://codecov.io/github/deniederhut/redicorpus/coverage.svg?branch=master)](https://codecov.io/github/deniederhut/redicorpus?branch=master)
 
 # In development -- unstable
 
