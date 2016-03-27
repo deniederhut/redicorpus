@@ -8,9 +8,3 @@ def test_client():
 
 def test_response():
     pass
-
-def test_get_datelimit():
-    pass
-
-def test_set_datelimit():
-    pass
