@@ -20,8 +20,8 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
     keywords='linguistics semantics diffusion timeseries',
-    packages=['redicorpus'],
-    package_data={'redicorpus' : ['*.json']},
+    packages=['redicorpus', 'redicorpus.base', 'redicorpus.ask'],
+    package_data={'redicorpus' : ['data/*']},
     requires=[
             'datetime',
             'celery',
