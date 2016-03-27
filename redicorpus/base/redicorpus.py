@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 from arrow import Arrow, utcnow
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
@@ -595,12 +595,17 @@ def get_datelimit(source):
         })['date']
     except TypeError:
         datelimit = datetime.utcnow() - timedelta(1)
+        c['Comment']['LastUpdated'].insert_one({
+            'source' : source,
+            'date' : datelimit
+        })
     return datelimit
 
 def set_datelimit(source, startdate):
-    c['Comment']['LastUpdated'].update_one({
+    c['Comment']['LastUpdated'].replace_one({
         'source' : source
     }, {
+        'source' : source,
         'date' : startdate
     })
 
