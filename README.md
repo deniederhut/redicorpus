@@ -1,11 +1,8 @@
----
-Title : redicorpus
-Author : Dillon Niederhut
----
+# Redicorpus -- the distributed, out of core, real-time solution for building and querying linguistic data
 
 [![Build Status](https://travis-ci.org/deniederhut/redicorpus.svg?branch=master)](https://travis-ci.org/deniederhut/redicorpus)  [![codecov.io](https://codecov.io/github/deniederhut/redicorpus/coverage.svg?branch=master)](https://codecov.io/github/deniederhut/redicorpus?branch=master)
 
-# In development -- unstable
+**In development -- unstable**
 
 ## Description
 
