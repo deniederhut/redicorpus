@@ -1,7 +1,6 @@
 #!/bin/env python
 
 import pytest
-from redicorpus import c
 from redicorpus.ask import trackers
 
 def test_track_counts():
