@@ -588,6 +588,22 @@ def get_map(term, source, n, position=0, start_date=Arrow(1970,1,1).datetime, st
     """Retrieve pre-computed map"""
     return Map(term, source, n, position, start_date, stop_date)
 
+def get_datelimit(source):
+    try:
+        datelimit = c['Comment']['LastUpdated'].find_one({
+            'source' : source
+        })['date']
+    except TypeError:
+        datelimit = datetime.utcnow() - timedelta(1)
+    return datelimit
+
+def set_datelimit(source, startdate):
+    c['Comment']['LastUpdated'].update_one({
+        'source' : source
+    }, {
+        'date' : startdate
+    })
+
 def zipf_test(x, y=None):
     """Conduct one-way or two-way Zipf test on ArrayLike objects"""
     pass
