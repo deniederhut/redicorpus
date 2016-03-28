@@ -125,6 +125,14 @@ def test_map():
 def test_get_map():
     rc.get_map(term=rc.String('proof'), source='test', n=1)
 
+def test_get_datelimit():
+    assert rc.get_datelimit('test') < datetime.utcnow()
+
+def test_set_datelimit():
+    date = datetime(2015,1,1)
+    rc.set_datelimit('test', date)
+    assert rc.get_datelimit('test') == date
+
 def test_zipf_test():
     rc.zipf_test(rc.ArrayLike())
 

@@ -10,7 +10,7 @@ from __future__ import absolute_import
 
 from arrow import Arrow, utcnow
 from copy import deepcopy
-from datetime import datetime
+from datetime import datetime, timedelta
 from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
@@ -587,6 +587,27 @@ def get_body(source, n=1, str_type='String', count_type='count', start_date=utcn
 def get_map(term, source, n, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
     """Retrieve pre-computed map"""
     return Map(term, source, n, position, start_date, stop_date)
+
+def get_datelimit(source):
+    try:
+        datelimit = c['Comment']['LastUpdated'].find_one({
+            'source' : source
+        })['date']
+    except TypeError:
+        datelimit = datetime.utcnow() - timedelta(1)
+        c['Comment']['LastUpdated'].insert_one({
+            'source' : source,
+            'date' : datelimit
+        })
+    return datelimit
+
+def set_datelimit(source, startdate):
+    c['Comment']['LastUpdated'].replace_one({
+        'source' : source
+    }, {
+        'source' : source,
+        'date' : startdate
+    })
 
 def zipf_test(x, y=None):
     """Conduct one-way or two-way Zipf test on ArrayLike objects"""

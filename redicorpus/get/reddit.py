@@ -59,22 +59,6 @@ class Response(object):
         self.translation['cooked'] = cooked
         return self.translation
 
-def get_datelimit(source):
-    try:
-        datelimit = c['Comment']['LastUpdated'].find_one({
-            'source' : source
-        })['date']
-    except TypeError:
-        datelimit = datetime.utcnow() - timedelta(1)
-    return datelimit
-
-def set_datelimit(source, startdate):
-    c['Comment']['LastUpdated'].update_one({
-        'source' : source
-    }, {
-        'date' : startdate
-    })
-
 def run(source):
     reddit = Client(source=source)
     for comment in reddit.request():
