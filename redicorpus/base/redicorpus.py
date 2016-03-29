@@ -262,6 +262,7 @@ class Comment(DictLike):
                     for gram in ngrams(self[str_type.__name__], n):
                         self.__updatedictionary__(gram, n, str_type)
                         self.__updatebody__(gram, n, str_type)
+            return success
 
 # Array classes
 
@@ -579,6 +580,10 @@ def get_comment(_id, source):
         return Comment(document)
     else:
         raise FileNotFoundError("No comment with id {} from source {}".format(_id, source))
+
+@app.task
+def insert_comment(response):
+    return Comment(response).insert()
 
 def get_body(source, n=1, str_type='String', count_type='count', start_date=utcnow().datetime, stop_date=utcnow().datetime):
     """Retrieve counts by date and type"""

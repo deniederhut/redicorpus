@@ -87,4 +87,4 @@ if __name__ == '__main__':
 
     reddit = Client(source=args.source)
     for comment in reddit.request():
-        redicorpus.Comment(comment).insert()
+        redicorpus.insert_comment.delay(comment)

@@ -84,6 +84,13 @@ def test_get_comment():
     comment = rc.get_comment('d024gzv', 'test')
     assert comment
 
+def test_insert_comment():
+    c['Comment']['test'].delete_one({'_id' : 'd024gzv'})
+    with open('test/data/comment.json', 'r') as f:
+        data = json.load(f)
+    obj = rc.insert_comment.delay(data)
+    assert obj.get()
+
 def test_array_like():
     with pytest.raises(ValueError):
         rc.ArrayLike(n=1, str_type='Frayed')
