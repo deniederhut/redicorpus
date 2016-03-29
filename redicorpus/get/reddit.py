@@ -68,6 +68,7 @@ class Response(object):
             self['children'] = []
         self['cooked'], self['links'] = parse_markdown(self['raw'])
 
+
 def parse_markdown(text):
     link_list = []
     p = re.compile(r'\[(?P<text>.+)\]\((?P<link>.+)\)')
@@ -76,10 +77,6 @@ def parse_markdown(text):
         text = text.replace(match.group(), match.group('text'))
     return text, link_list
 
-def run(source):
-    reddit = Client(source=source)
-    for comment in reddit.request():
-        redicorpus.Comment(comment).insert()
 
 if __name__ == '__main__':
     import argparse
@@ -88,4 +85,6 @@ if __name__ == '__main__':
     parser.add_argument('source', help='Subreddit name from which to draw comments \nFor all subreddits, use "all"')
     args = parser.parse_args()
 
-    run(source=args.source)
+    reddit = Client(source=args.source)
+    for comment in reddit.request():
+        redicorpus.Comment(comment).insert()
