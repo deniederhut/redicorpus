@@ -499,23 +499,25 @@ class Map(ArrayLike):
         if isinstance(term, tuple):
             if isinstance(term[0], StringLike):
                 self.str_type = term[0].__class__()
-                self.term = ' '.join(term)
+                self.term = tuple([item.__totuple__() for item in term])
             else:
                 raise TypeError("{} must be a string like class".format(term))
         else:
             if isinstance(term, StringLike):
                 self.str_type = term.__class__()
+                self.term = (term.__totuple__(), )
             else:
                 raise TypeError("{} must be a string like or tuple".format(term))
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in Comment")
 
-        self.term = term
         self.start_date = start_date
         self.stop_date = stop_date
         self.position = position
         self.n = n
         self.source = source
+
+        self.__fromdb__()
 
     def __fromdb__(self):
         try:
@@ -538,7 +540,7 @@ class Map(ArrayLike):
         self.data = []
         for document in c['Body'][self.source].find({
             'term' : self.term,
-            'date' : {'$gt' : self.start_time, '$lt' : self.stop_time},
+            'date' : {'$gt' : self.start_date, '$lt' : self.stop_date},
             'str_type' : self.str_type,
             'n' : self.n
         }, {
@@ -546,25 +548,25 @@ class Map(ArrayLike):
         }):
             for _id in document['documents']:
                 comment = get_comment(_id, self.source)
-                ngram_list = comment[str_type]
+                ngram_list = comment[self.str_type]
                 if self.position:
                     loc = ngram_list.index(term) + position
                     self[' '.join(ngram_list[loc])] + 1
                 else:
-                    ngram_list = comment[str_type].remove(term)
+                    ngram_list = comment[self.str_type].remove(self.term)
                     for ngram in ngram_list:
                         self[' '.join(ngram)] + 1
         self * (sum(self) ** -1)
         self.__tocollection__()
 
-        def __tocollection__(self):
-            c['Body'][source].update_one({
-            'term' : self.term,
-            'position' : self.position,
-            'start_date' : self.start_date,
-            'stop_date' : self.stop_date,
-            'probabilities' : self.data,
-            })
+    def __tocollection__(self):
+        c['Body'][source].update_one({
+        'term' : self.term,
+        'position' : self.position,
+        'start_date' : self.start_date,
+        'stop_date' : self.stop_date,
+        'probabilities' : self.data,
+        })
 
 
 # Module functions
