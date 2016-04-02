@@ -592,27 +592,25 @@ class Vector(ArrayLike):
 class Map(ArrayLike):
     """Conditional probability map for a single term"""
 
-    def __init__(self, term, source, n, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
+    def __init__(self, gram, source, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
         super(Map, self).__init__(n=n)
-        if isinstance(term, tuple):
-            if isinstance(term[0], StringLike):
-                self.str_type = term[0].__class__()
-                self.term = tuple([item.__totuple__() for item in term])
-            else:
-                raise TypeError("{} must be a string like class".format(term))
+        if isinstance(term, Gram):
+            self.str_type = gram.str_type
+            self.term = gram.term
+            self.n = len(gram)
+        elif isinstance(gram, StringLike):
+            gram = Gram(gram)
+            self.str_type = gram.str_type
+            self.term = gram.term
+            self.n = len(gram)
         else:
-            if isinstance(term, StringLike):
-                self.str_type = term.__class__()
-                self.term = (term.__totuple__(), )
-            else:
-                raise TypeError("{} must be a string like or tuple".format(term))
+            raise TypeError("{} must be StringLike or Gram".format(term))
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in Comment")
 
         self.start_date = start_date
         self.stop_date = stop_date
         self.position = position
-        self.n = n
         self.source = source
 
         self.__fromdb__()
@@ -655,10 +653,10 @@ class Map(ArrayLike):
                     for ngram in ngram_list:
                         self[' '.join(ngram)] + 1
         self * (sum(self) ** -1)
-        # try:
-        #     self * (sum(self) ** -1)
-        # except ZeroDivisionError:
-        #     pass
+        try:
+            self * (sum(self) ** -1)
+        except ZeroDivisionError:
+            raise ValueError("No comments with term {} found".format(self.term))
         self.__tocollection__()
 
     def __tocollection__(self):
