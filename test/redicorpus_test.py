@@ -126,11 +126,11 @@ def test_get_body():
     vector = rc.get_body(source='test', start_date=datetime(2016,2,15), stop_date=datetime(2016,2,18))
     assert vector
 
-def test_map():
-    mapping = rc.Map(term=rc.String('proof'), source='test', n=1)
-
-def test_get_map():
-    rc.get_map(term=rc.String('proof'), source='test', n=1)
+# def test_map():
+#     mapping = rc.Map(term=rc.String('proof'), source='test', n=1)
+#
+# def test_get_map():
+#     rc.get_map(term=rc.String('proof'), source='test', n=1)
 
 def test_get_datelimit():
     assert rc.get_datelimit('test') < datetime.utcnow()
@@ -143,7 +143,7 @@ def test_set_datelimit():
 def test_zipf_test():
     rc.zipf_test(rc.ArrayLike())
 
-def test_cleanup():
-    for database in c.database_names():
-        if database not in ['local', 'admin', 'test']:
-            c.drop_database(database)
+# def test_cleanup():
+#     for database in c.database_names():
+#         if database not in ['local', 'admin', 'test']:
+#             c.drop_database(database)

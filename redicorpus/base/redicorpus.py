@@ -32,39 +32,63 @@ class StringLike(object):
                 self.__fromtuple__(data)
 
     def __add__(self, x):
-        return str(self.cooked) + str(x)
+        return self.term + str(x)
 
     def __class__(self):
         return "StringLike"
 
     def __iter__(self):
-        for character in self.cooked:
+        for character in self.term:
             yield character
 
     def __len__(self):
-        return len(self.cooked)
+        return len(self.term)
 
     def __mul__(self, x):
-        return self.cooked * x
+        return self.term * x
 
     def __repr__(self):
-        return "Cooked : {}, from raw : {}".format(self.cooked, self.raw)
+        return "Cooked : {}, from raw : {}".format(self.term, self.raw)
 
     def __str__(self):
-        return self.cooked
+        return self.term
 
     def __fromstring__(self, data, pos):
-        self.raw = data
+        self._raw = data
+        self._term = None
         if not pos:
             pos = pos_tag([data])[0][1]
-        self.pos = pos
-        self.str_type = self.__class__()
+        self._pos = pos
 
     def __fromtuple__(self, data):
-        self.cooked, self.raw, self.pos, self.str_type = data
+        self.term, self.raw, self.pos, _ = data
 
     def __totuple__(self):
-        return self.cooked, self.raw, self.pos, self.str_type
+        return self.term, self.raw, self.pos, self.__class__()
+
+    @property
+    def term(self):
+        return self._term
+
+    @term.setter
+    def term(self, value):
+        self._term = value
+
+    @property
+    def raw(self):
+        return self._raw
+
+    @raw.setter
+    def raw(self, value):
+        self._raw = value
+
+    @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    def pos(self, value):
+        self._pos = value
 
 
 class String(StringLike):
@@ -72,7 +96,7 @@ class String(StringLike):
 
     def __init__(self, data, pos=None):
         super(String, self).__init__(data, pos)
-        self.cooked = self.raw
+        self.term = self.raw
 
     def __class__(self):
         return "String"
@@ -84,7 +108,7 @@ class Stem(StringLike):
     def __init__(self, data, pos=None):
         super(Stem, self).__init__(data, pos)
         if isinstance(data, str):
-            self.cooked = self.stemmer(data)
+            self.term = self.stemmer(data)
 
     def __class__(self):
         return "Stem"
@@ -99,7 +123,7 @@ class Lemma(StringLike):
     def __init__(self, data, pos=None):
         super(Lemma, self).__init__(data, pos)
         if isinstance(data, str):
-            self.cooked = self.lemmer(data, self.pos)
+            self.term = self.lemmer(data, self.pos)
 
     def __class__(self):
         return "Lemma"
@@ -315,7 +339,7 @@ class ArrayLike(object):
         if isinstance(key, str):
             pass
         elif isinstance(key, StringLike):
-            key = key.cooked
+            key = key.term
         elif isinstance(key, tuple) & isinstance(key[0], StringLike):
             key = ' '.join([string_like.cooked for string_like in key])
         elif isinstance(key, list) & isinstance(key[0], str):
@@ -536,7 +560,7 @@ class Map(ArrayLike):
         except TypeError:
             raise FileNotFoundError
 
-    def __fromcursor__(self): #TODO cursor either not returning documents or returning empty documents
+    def __fromcursor__(self):
         self.data = []
         for document in c['Body'][self.source].find({
             'term' : self.term,
@@ -556,14 +580,15 @@ class Map(ArrayLike):
                     ngram_list = comment[self.str_type].remove(self.term)
                     for ngram in ngram_list:
                         self[' '.join(ngram)] + 1
-        try:
-            self * (sum(self) ** -1)
-        except ZeroDivisionError:
-            pass
+        self * (sum(self) ** -1)
+        # try:
+        #     self * (sum(self) ** -1)
+        # except ZeroDivisionError:
+        #     pass
         self.__tocollection__()
 
     def __tocollection__(self):
-        c['Body'][source].update_one({
+        c['Body'][self.source].insert_one({
         'term' : self.term,
         'position' : self.position,
         'start_date' : self.start_date,
