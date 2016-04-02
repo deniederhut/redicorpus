@@ -142,6 +142,67 @@ class Lemma(StringLike):
         else:
             return 'n'
 
+class Gram(object):
+    """Acts like a tuple, but for StringLike objects"""
+
+    def __init__(data):
+        self.gram = data
+        if len(self) > 1:
+            if len(set([type(item) for item in self.gram])) > 1:
+                raise TypeError("Gram components must be the same type")
+        self.str_type = type(self.gram[0])
+
+    def __fromdb__(self, document):
+        data = []
+        for ix, term in document['term']:
+            data.append(tuple[
+            term,
+            document['raw'][ix],
+            document['pos'][ix],
+            document['str_type']
+            ])
+        self.gram = tuple([StringLike.__fromtuple__(item) for item in data])
+
+    def __len__(self):
+        return len(self.gram)
+
+    def __str__(self):
+        return ' '.join([str(term) for term in self.gram])
+
+    def __todb__(self):
+        return {
+        'term' : tuple([item.term for item in self.gram]),
+        'raw' : tuple([item.raw for item in self.gram]),
+        'pos' : tuple([item.pos for item in self.gram]),
+        'str_type' : self.str_type
+        }
+
+    @property
+    def gram(self):
+        return self._gram
+
+    @gram.setter
+    def gram(self, value):
+        if isinstance(value, tuple) & isinstance(value[0], StringLike):
+            self._gram = value
+        elif isinstance(value, list) & isinstance(value[0], StringLike):
+            self._gram = tuple(value)
+        elif isinstance(value, StringLike):
+            self._gram = (value,)
+        else:
+            raise TypeError("Expected an iterable of StringLike objects")
+
+    @property
+    def string_type(self):
+        return self._str_type
+
+    @string_type.setter
+    def string_type(self, value):
+        if type(value) in StringLike.__subclasses__():
+            self._str_type = value
+        else:
+            raise ValueError("String type must be StringLike")
+
 # Dict classes
 
 class DictLike(object):
