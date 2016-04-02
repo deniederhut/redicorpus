@@ -193,6 +193,14 @@ class Gram(object):
             raise TypeError("Expected an iterable of StringLike objects")
 
     @property
+    def pos(self):
+        return tuple([item.pos for item in self.gram])
+
+    @property
+    def raw(self):
+        return tuple([item.raw for item in self.gram])
+
+    @property
     def string_type(self):
         return self._str_type
 
@@ -202,6 +210,10 @@ class Gram(object):
             self._str_type = value
         else:
             raise ValueError("String type must be StringLike")
+
+    @property
+    def term(self):
+        return tuple([item.term for item in self.gram])
 
 # Dict classes
 
@@ -279,20 +291,19 @@ class Comment(DictLike):
             if key not in key_list:
                 self.data[key] = data.get(key)
 
-
-    def __updatebody__(self, gram, n, str_type):
+    def __updatebody__(self, gram):
         collection = c['Body'][self['source']]
-        term = tuple(string_like.__totuple__()[0] for string_like in gram)
-        raw = tuple(string_like.__totuple__()[1] for string_like in gram)
-        pos = tuple(string_like.__totuple__()[2] for string_like in gram)
+        term = gram.term
+        raw = gram.raw
+        pos = gram.pos
         collection.update_one(
             {
             'date' : self['date'],
             'term' : term,
             'raw' : raw,
             'pos' : pos,
-            'n' : n,
-            'str_type' : str_type.__name__
+            'n' : len(gram),
+            'str_type' : gram.str_type
             }, {
             '$inc' : {
                 'count' : 1, 'total' : 1
@@ -309,11 +320,11 @@ class Comment(DictLike):
             },
             upsert=True)
 
-    def __updatedictionary__(self, gram, n, str_type):
+    def __updatedictionary__(self, gram):
         dictionary = c['Dictionary'][str_type.__name__]
         counters = c['Counter'][str_type.__name__]
-        cooked_gram = ' '.join([item.cooked for item in gram])
-        if not dictionary.find_one({'term' : cooked_gram, 'n' : n}):
+        term = gram.term
+        if not dictionary.find_one({'term' : term, 'n' : n}):
             id_counter = counters.find_one_and_update({
             'n' : n,
             },
@@ -324,7 +335,7 @@ class Comment(DictLike):
             }, return_document=True)
             dictionary.insert_one({
             'ix' : id_counter['counter'],
-            'term' : cooked_gram,
+            'term' : term,
             'n' : n
             })
 
@@ -344,9 +355,10 @@ class Comment(DictLike):
         if success:
             for n in self.n_list:
                 for str_type in self.str_classes:
-                    for gram in ngrams(self[str_type.__name__], n):
-                        self.__updatedictionary__(gram, n, str_type)
-                        self.__updatebody__(gram, n, str_type)
+                    for item in ngrams(self[str_type.__name__], n):
+                        gram = Gram(item)
+                        self.__updatedictionary__(gram)
+                        self.__updatebody__(gram)
             return success
 
 # Array classes
