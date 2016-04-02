@@ -143,7 +143,7 @@ def test_set_datelimit():
 def test_zipf_test():
     rc.zipf_test(rc.ArrayLike())
 
-# def test_cleanup():
-#     for database in c.database_names():
-#         if database not in ['local', 'admin', 'test']:
-#             c.drop_database(database)
+def test_cleanup():
+    for database in c.database_names():
+        if database not in ['local', 'admin', 'test']:
+            c.drop_database(database)

@@ -145,12 +145,12 @@ class Lemma(StringLike):
 class Gram(object):
     """Acts like a tuple, but for StringLike objects"""
 
-    def __init__(data):
+    def __init__(self, data):
         self.gram = data
         if len(self) > 1:
             if len(set([type(item) for item in self.gram])) > 1:
                 raise TypeError("Gram components must be the same type")
-        self.str_type = type(self.gram[0])
+        self.str_type = self.gram[0].__class__()
 
     def __fromdb__(self, document):
         data = []
@@ -206,7 +206,7 @@ class Gram(object):
 
     @string_type.setter
     def string_type(self, value):
-        if type(value) in StringLike.__subclasses__():
+        if value in StringLike.__subclasses__().__name__:
             self._str_type = value
         else:
             raise ValueError("String type must be StringLike")
@@ -321,9 +321,10 @@ class Comment(DictLike):
             upsert=True)
 
     def __updatedictionary__(self, gram):
-        dictionary = c['Dictionary'][str_type.__name__]
-        counters = c['Counter'][str_type.__name__]
+        dictionary = c['Dictionary'][gram.str_type]
+        counters = c['Counter'][gram.str_type]
         term = gram.term
+        n = len(gram)
         if not dictionary.find_one({'term' : term, 'n' : n}):
             id_counter = counters.find_one_and_update({
             'n' : n,
