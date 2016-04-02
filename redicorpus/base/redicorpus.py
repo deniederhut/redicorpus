@@ -536,7 +536,7 @@ class Map(ArrayLike):
         except TypeError:
             raise FileNotFoundError
 
-    def __fromcursor__(self):
+    def __fromcursor__(self): #TODO cursor either not returning documents or returning empty documents
         self.data = []
         for document in c['Body'][self.source].find({
             'term' : self.term,
@@ -556,7 +556,10 @@ class Map(ArrayLike):
                     ngram_list = comment[self.str_type].remove(self.term)
                     for ngram in ngram_list:
                         self[' '.join(ngram)] + 1
-        self * (sum(self) ** -1)
+        try:
+            self * (sum(self) ** -1)
+        except ZeroDivisionError:
+            pass
         self.__tocollection__()
 
     def __tocollection__(self):
