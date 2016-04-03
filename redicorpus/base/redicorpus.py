@@ -183,10 +183,11 @@ class Gram(object):
 
     @gram.setter
     def gram(self, value):
-        if isinstance(value, tuple) & isinstance(value[0], StringLike):
-            self._gram = value
-        elif isinstance(value, list) & isinstance(value[0], StringLike):
-            self._gram = tuple(value)
+        if isinstance(value, tuple) | isinstance(value, list):
+            if isinstance(value[0], StringLike):
+                self._gram = tuple(value)
+            else:
+                raise TypeError("Expected an iterable of StringLike objects")
         elif isinstance(value, StringLike):
             self._gram = (value,)
         else:
@@ -593,8 +594,8 @@ class Map(ArrayLike):
     """Conditional probability map for a single term"""
 
     def __init__(self, gram, source, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
-        super(Map, self).__init__(n=n)
-        if isinstance(term, Gram):
+        super(Map, self).__init__()
+        if isinstance(gram, Gram):
             self.str_type = gram.str_type
             self.term = gram.term
             self.n = len(gram)
@@ -644,19 +645,21 @@ class Map(ArrayLike):
         }):
             for _id in document['documents']:
                 comment = get_comment(_id, self.source)
-                ngram_list = comment[self.str_type]
+                gram_list = []
+                for ngram in ngrams(comment[self.str_type], self.n):
+                    gram_list.append(Gram(ngram).term)
                 if self.position:
-                    loc = ngram_list.index(term) + position
-                    self[' '.join(ngram_list[loc])] + 1
+                    loc = gram_list.index(self.term) + position
+                    self[gram_list[loc]] + 1
                 else:
-                    ngram_list = comment[self.str_type].remove(self.term)
-                    for ngram in ngram_list:
-                        self[' '.join(ngram)] + 1
+                    gram_list.remove(self.term)
+                    for gram in gram_list:
+                        self[gram] + 1
         self * (sum(self) ** -1)
-        try:
-            self * (sum(self) ** -1)
-        except ZeroDivisionError:
-            raise ValueError("No comments with term {} found".format(self.term))
+        # try:
+        #     self * (sum(self) ** -1)
+        # except ZeroDivisionError:
+        #     raise ValueError("No comments with term {} found".format(self.term))
         self.__tocollection__()
 
     def __tocollection__(self):
@@ -691,9 +694,9 @@ def get_body(source, n=1, str_type='String', count_type='count', start_date=utcn
     """Retrieve counts by date and type"""
     return Vector(source, n, str_type, count_type, start_date, stop_date)
 
-def get_map(term, source, n, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
+def get_map(gram, source, n, position=0, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
     """Retrieve pre-computed map"""
-    return Map(term, source, n, position, start_date, stop_date)
+    return Map(gram, source, position, start_date, stop_date)
 
 def get_datelimit(source):
     try:
