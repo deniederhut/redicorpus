@@ -127,10 +127,10 @@ def test_get_body():
     assert vector
 
 def test_map():
-    mapping = rc.Map(term=rc.String('proof'), source='test', n=1)
+    mapping = rc.Map(gram=rc.String('proof'), source='test')
 
 def test_get_map():
-    rc.get_map(term=rc.String('proof'), source='test', n=1)
+    rc.get_map(gram=rc.String('proof'), source='test', n=1)
 
 def test_get_datelimit():
     assert rc.get_datelimit('test') < datetime.utcnow()

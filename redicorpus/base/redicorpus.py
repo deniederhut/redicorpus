@@ -659,12 +659,11 @@ class Map(ArrayLike):
                 else:
                     gram_list.remove(self.term)
                     for gram in gram_list:
-                        self[gram] + 1
-        self * (sum(self) ** -1)
-        # try:
-        #     self * (sum(self) ** -1)
-        # except ZeroDivisionError:
-        #     raise ValueError("No comments with term {} found".format(self.term))
+                        self[gram] += 1
+        try:
+            self * (sum(self) ** -1)
+        except ZeroDivisionError:
+            raise ValueError("No comments with term {} found".format(self.term))
         self.__tocollection__()
 
     def __tocollection__(self):
