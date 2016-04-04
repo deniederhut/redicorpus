@@ -405,20 +405,25 @@ class ArrayLike(object):
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            return self.data[key]
+            ix = key
         else:
             ix = self.__getix__(key)
+        try:
             return self.data[ix]
+        except IndexError:
+            return 0
 
     def __getix__(self, key):
         if isinstance(key, str):
             pass
         elif isinstance(key, StringLike):
+            key = Gram(key).term
+        elif isinstance(key, Gram):
             key = key.term
-        elif isinstance(key, tuple) & isinstance(key[0], StringLike):
-            key = ' '.join([string_like.cooked for string_like in key])
+        elif isinstance(key, tuple) & isinstance(key[0], str):
+            key = key
         elif isinstance(key, list) & isinstance(key[0], str):
-            key = ' '.join([item for item in key])
+            key = tuple(key)
         else:
             raise TypeError("Expected str, StringLike, or tuple of StringLikes")
         ix = self.dictionary.find_one(
