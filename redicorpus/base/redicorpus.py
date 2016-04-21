@@ -538,8 +538,8 @@ class Vector(ArrayLike):
         }):
             ix = counts.__getix__(document['term'])
             counts[ix] += document['count']
-            documents[ix] = documents[ix] & set(document['documents'])
-            users[ix] = documents[ix] & set(document['users'])
+            documents[ix] = documents[ix] | set(document['documents'])
+            users[ix] = documents[ix] | set(document['users'])
         if self.count_type == 'activation':
             self.data = self.activation(users)
         elif self.count_type == 'count':
