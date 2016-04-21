@@ -25,7 +25,11 @@ class Client(object):
         date = datetime.utcfromtimestamp(r[0].created_utc)
         while date > self.datelimit:
             for comment in r:
-                yield Response(comment, self.source)
+                result = Response(comment, self.source)
+                if result['author']:
+                    yield result
+                else:
+                    pass
             after = r[-1].name
             r = self.getlisting(params={'after' : after})
             date = datetime.utcfromtimestamp(r[0].created_utc)
@@ -59,7 +63,10 @@ class Response(object):
         self['parent_id'] = self.response.get('parent_id')
         self['raw'] = self.response.get('body')
         self['date'] = datetime.utcfromtimestamp(self.response['created_utc'])
-        self['author'] = self.response.get('author').name
+        try:
+            self['author'] = self.response.get('author').name
+        except:
+            self['author'] = None
         self['controversiality'] = self.response.get('controversiality')
         self['score'] = self.response.get('score')
         try:
