@@ -368,8 +368,9 @@ class Comment(DictLike):
 class ArrayLike(object):
     """Acts like an array, but has database dictionary methods"""
 
-    def __init__(self, data=None, n=1, str_type='String'):
+    def __init__(self, data=None, n=1, str_type='String', null=0):
         self.data = []
+        self.null = null
         if data:
             self.data = data
         self.n = n
@@ -401,7 +402,7 @@ class ArrayLike(object):
 
     def __forcelen__(self, length):
         if length > len(self):
-            self.data = self.data + [0] * (length - len(self))
+            self.data = self.data + [self.null] * (length - len(self))
 
     def __getitem__(self, key):
         if isinstance(key, int):
@@ -411,7 +412,7 @@ class ArrayLike(object):
         try:
             return self.data[ix]
         except IndexError:
-            return 0
+            return self.null
 
     def __getix__(self, key):
         if isinstance(key, str):
@@ -442,9 +443,9 @@ class ArrayLike(object):
 
     def __matchlen__(self, other):
         if len(self) > len(other):
-            other.data = other.data + [0] * (len(self) - len(other))
+            other.data = other.data + [self.null] * (len(self) - len(other))
         elif len(other) > len(self.data):
-            self.data = self.data + [0] * (len(other) - len(self.data))
+            self.data = self.data + [self.null] * (len(other) - len(self.data))
 
     def __mul__(self, other):
         if isinstance(other, float) | isinstance(other, int):
@@ -526,8 +527,8 @@ class Vector(ArrayLike):
 
     def __fromcursor__(self):
         counts = ArrayLike(n=self.n, str_type=self.str_type)
-        documents = ArrayLike(n=self.n, str_type=self.str_type)
-        users = ArrayLike(n=self.n, str_type=self.str_type)
+        documents = ArrayLike(n=self.n, str_type=self.str_type, null=set())
+        users = ArrayLike(n=self.n, str_type=self.str_type, null=set())
         for document in self.collection.find({
             'date' : {
                 '$gt' : self.start_date, '$lt' : self.stop_date
@@ -538,7 +539,7 @@ class Vector(ArrayLike):
             ix = counts.__getix__(document['term'])
             counts[ix] += document['count']
             documents[ix] = documents[ix] & set(document['documents'])
-            users[ix] += documents[ix] & set(document['users'])
+            users[ix] = documents[ix] & set(document['users'])
         if self.count_type == 'activation':
             self.data = self.activation(users)
         elif self.count_type == 'count':
