@@ -50,7 +50,7 @@ class StringLike(object):
         return self.term * x
 
     def __repr__(self):
-        return "Cooked : {}, from raw : {}".format(self.term, self.raw)
+        return self.term
 
     def __str__(self):
         return self.term
