@@ -280,7 +280,7 @@ class Comment(DictLike):
             else:
                 self.__fromdict__(data)
         for str_type in self.str_classes:
-            self[str_type.__name__] = tokenize.apply(args=[self['raw'], str_type]).result
+            self[str_type.__name__] = tokenize.apply(args=[self['cooked'], str_type]).result
 
     def __class__(self):
         return "Comment"
