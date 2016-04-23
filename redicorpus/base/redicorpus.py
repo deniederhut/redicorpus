@@ -482,7 +482,10 @@ class ArrayLike(object):
             self.__setbyix__(key, value)
         else:
             ix = self.__getix__(key)
-            self.__setbyix__(ix, value)
+            if ix:
+                self.__setbyix__(ix, value)
+            else:
+                raise ValueError("Term not in dictionary")
 
     def __str__(self):
         return str(self.data)
