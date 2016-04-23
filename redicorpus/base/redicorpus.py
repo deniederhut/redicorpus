@@ -396,11 +396,11 @@ class ArrayLike(object):
         return "ArrayLike"
 
     def __contains__(self, key):
-        try:
-            self.__getitem__(key)
-            return True
-        except TypeError:
+        result = self.__getitem__(key)
+        if result == self.null:
             return False
+        else:
+            return True
 
     def __forcelen__(self, length):
         if length > len(self):
@@ -411,9 +411,12 @@ class ArrayLike(object):
             ix = key
         else:
             ix = self.__getix__(key)
-        try:
-            return self.data[ix]
-        except IndexError:
+        if ix:
+            try:
+                return self.data[ix]
+            except IndexError:
+                return self.null
+        else:
             return self.null
 
     def __getix__(self, key):
@@ -429,11 +432,14 @@ class ArrayLike(object):
             key = tuple(key)
         else:
             raise TypeError("Expected str, StringLike, or tuple of StringLikes")
-        ix = self.dictionary.find_one(
-        {
-            'term' : key,
-            'n' : self.n
-        })['ix']
+        try:
+            ix = self.dictionary.find_one(
+            {
+                'term' : key,
+                'n' : self.n
+            })['ix']
+        except TypeError:
+            ix = None
         return ix
 
     def __iter__(self):
