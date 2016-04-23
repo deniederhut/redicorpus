@@ -67,10 +67,7 @@ for collection in c['Comment'].collection_names():
                 [('term', pymongo.TEXT)], unique=False, background=True
             ),
             pymongo.IndexModel(
-                [('date', pymongo.DESCENDING)], unique=False, background=True
-            ),
-            pymongo.IndexModel(
-                [('n', pymongo.ASCENDING)], unique=False, background=True
+                [('n', pymongo.ASCENDING), ('date', pymongo.DESCENDING)], unique=False, background=True
             )
         ])
 
