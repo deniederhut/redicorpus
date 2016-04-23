@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
+from pymongo.collection import ReturnDocument
 from redicorpus import c
 from redicorpus import exceptions as e
 from redicorpus.celery import app
@@ -335,7 +336,7 @@ class Comment(DictLike):
             '$inc' : {
                 'counter' : 1
                 }
-            }, return_document=True)
+            }, return_document=ReturnDocument.BEFORE)
             dictionary.insert_one({
             'ix' : id_counter['counter'],
             'term' : term,
