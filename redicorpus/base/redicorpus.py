@@ -619,7 +619,7 @@ class Map(ArrayLike):
             self.term = gram.term
             self.n = len(gram)
         else:
-            raise TypeError("{} must be StringLike or Gram".format(term))
+            raise TypeError("{} must be StringLike or Gram".format(self.term))
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in Comment")
 
