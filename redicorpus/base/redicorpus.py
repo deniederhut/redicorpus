@@ -15,6 +15,7 @@ from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
 from redicorpus import c
+from redicorpus import exceptions as e
 from redicorpus.celery import app
 import warnings
 
@@ -506,7 +507,7 @@ class Vector(ArrayLike):
     def __fromdb__(self):
         try:
             self.__fromcache__()
-        except FileNotFoundError:
+        except e.DocumentNotFound:
             self.__fromcursor__()
 
     def __fromcache__(self):
@@ -523,7 +524,7 @@ class Vector(ArrayLike):
         if result:
             self.data = result[self.count_type]
         else:
-            raise FileNotFoundError
+            raise e.DocumentNotFound(self.n, 'date range')
 
     def __fromcursor__(self):
         counts = ArrayLike(n=self.n, str_type=self.str_type)
@@ -625,7 +626,7 @@ class Map(ArrayLike):
     def __fromdb__(self):
         try:
             self.__fromcollection__()
-        except FileNotFoundError:
+        except e.DocumentNotFound:
             self.__fromcursor__()
 
     def __fromcollection__(self):
@@ -637,7 +638,7 @@ class Map(ArrayLike):
                 'stop_date' : self.stop_date
             })['probabilities']
         except TypeError:
-            raise FileNotFoundError
+            raise e.DocumentNotFound(self.term, 'daterange')
 
     def __fromcursor__(self):
         self.data = []
@@ -689,7 +690,7 @@ def get_comment(_id, source):
     if document:
         return Comment(document)
     else:
-        raise FileNotFoundError("No comment with id {} from source {}".format(_id, source))
+        raise e.DocumentNotFound(_id, source)
 
 @app.task
 def insert_comment(response):
