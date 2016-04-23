@@ -336,7 +336,7 @@ class Comment(DictLike):
             '$inc' : {
                 'counter' : 1
                 }
-            }, return_document=ReturnDocument.BEFORE)
+            }, return_document=ReturnDocument.AFTER)
             dictionary.insert_one({
             'ix' : id_counter['counter'],
             'term' : term,
