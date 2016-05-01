@@ -56,6 +56,9 @@ class StringLike(object):
         return self.term
 
     def __fromstring__(self, data, pos):
+        """
+        Make instance from string data. If pos is not set, NLTK's pos algorithm is used to infer it.
+        """
         self._raw = data
         self._term = None
         if not pos:
@@ -63,13 +66,16 @@ class StringLike(object):
         self._pos = pos
 
     def __fromtuple__(self, data):
+        """Convert self to tuple"""
         self.term, self.raw, self.pos, _ = data
 
     def __totuple__(self):
+        """Make instance from tuple"""
         return self.term, self.raw, self.pos, self.__class__()
 
     @property
     def term(self):
+        """Get the modified string/term/word/token"""
         return self._term
 
     @term.setter
@@ -78,6 +84,7 @@ class StringLike(object):
 
     @property
     def raw(self):
+        """Get the unmodified string/term/word/token"""
         return self._raw
 
     @raw.setter
@@ -86,6 +93,7 @@ class StringLike(object):
 
     @property
     def pos(self):
+        """Get the part of speech"""
         return self._pos
 
     @pos.setter
@@ -94,7 +102,7 @@ class StringLike(object):
 
 
 class String(StringLike):
-    """A string"""
+    """A string with metadata"""
 
     def __init__(self, data, pos=None):
         super(String, self).__init__(data, pos)
@@ -105,7 +113,7 @@ class String(StringLike):
 
 
 class Stem(StringLike):
-    """A stemmed string"""
+    """A snowball stemmed string with metadata"""
 
     def __init__(self, data, pos=None):
         super(Stem, self).__init__(data, pos)
@@ -116,11 +124,12 @@ class Stem(StringLike):
         return "Stem"
 
     def stemmer(self, data):
+        """Return stemmed data"""
         return SnowballStemmer('english').stem(data)
 
 
 class Lemma(StringLike):
-    """A lemmatized string"""
+    """A WordNet lemmatized string with metadata"""
 
     def __init__(self, data, pos=None):
         super(Lemma, self).__init__(data, pos)
@@ -130,11 +139,19 @@ class Lemma(StringLike):
     def __class__(self):
         return "Lemma"
 
-    def lemmer(self, data, pos):
+    def lemmer(self, data, pos=None):
+        """
+        Return lemmatized data based on part of speech
+        pos : str
+            Should be one of 'v', 'r', 'a', or 'n'
+        """
         return WordNetLemmatizer().lemmatize(data, self.pos_to_wordnet(pos))
 
     @staticmethod
     def pos_to_wordnet(pos):
+        """
+        Convert NLTK-style part of speech tag to WordNet-style part of speech tag
+        """
         if pos in ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']:
             return 'v'
         elif pos in ['RB', 'RBR', 'RBS']:
@@ -155,6 +172,7 @@ class Gram(object):
         self.str_type = self.gram[0].__class__()
 
     def __fromdb__(self, document):
+        """Make instance from database representation"""
         data = []
         for ix, term in document['term']:
             data.append(tuple[
@@ -172,6 +190,7 @@ class Gram(object):
         return ' '.join([str(term) for term in self.gram])
 
     def __todb__(self):
+        """Convert instance into document for db compatibility"""
         return {
         'term' : tuple([item.term for item in self.gram]),
         'raw' : tuple([item.raw for item in self.gram]),
@@ -197,6 +216,7 @@ class Gram(object):
 
     @property
     def pos(self):
+        """Get tuple of parts of speech"""
         return tuple([item.pos for item in self.gram])
 
     @property
@@ -205,6 +225,7 @@ class Gram(object):
 
     @property
     def string_type(self):
+        """Get string class of terms in gram"""
         return self._str_type
 
     @string_type.setter
@@ -216,12 +237,13 @@ class Gram(object):
 
     @property
     def term(self):
+        """Get tuple of terms in gram"""
         return tuple([item.term for item in self.gram])
 
 # Dict classes
 
 class DictLike(object):
-    """Acts like a dict, but has mongo i/o"""
+    """A dictionary with built-in database i/o"""
 
     def __init__(self, data=None, n_list=[1,2,3]):
         self.data = {}
@@ -249,6 +271,7 @@ class DictLike(object):
         return str(self.data)
 
     def __fromdict__(self, data):
+        """Make instance from document"""
         if not isinstance(data, dict):
             raise TypeError("Expected dict, not {}".format(type(data)))
         if '_id' not in data:
@@ -270,7 +293,45 @@ class DictLike(object):
 
 
 class Comment(DictLike):
-    """A single communicative event"""
+    """
+    A single communicative event represented as a DictLike
+
+    Has the following mandatory fields:
+    _id : str
+        ID of event (must be unique)
+    author : str
+        ID of person who created event
+    children : list
+        Child events
+    cooked : str
+        Text from event with markup formatting removed
+    date : datetime.datetime
+        Datetime of event creation (be careful to coerce to UTC)
+    Lemma : list
+        Iterable of Grams of lemmas
+    links : list
+        List of links pulled from markup (plaintext links not included)
+    parent_id : str
+        ID of parent event
+    raw : str
+        Text from event
+    source : str
+        Shortname of source of event
+    Stem : list
+        Iterable of Grams of stems
+    String : list
+        Iterable of Grams of strings
+    thread_id : list
+        ID of root event
+    url : str
+        Location of event
+
+    Has the following optional fields:
+    controversiality : int
+        Site-supplied estimate of divisiveness of event
+    score : int
+        Site-supplied estimate of value of event
+    """
 
     def __init__(self, data):
         super(Comment, self).__init__()
@@ -286,6 +347,7 @@ class Comment(DictLike):
         return "Comment"
 
     def __fromdocument__(self, data):
+        """Make instance from database document"""
         str_type_list = StringLike.__subclasses__()
         key_list = [subclass.__name__ for subclass in str_type_list]
         for subclass, key in zip(str_type_list, key_list):
@@ -295,6 +357,7 @@ class Comment(DictLike):
                 self.data[key] = data.get(key)
 
     def __updatebody__(self, gram):
+        """Pre-calculate and cache intermediate corpus data"""
         collection = c['Body'][self['source']]
         term = gram.term
         raw = gram.raw
@@ -324,6 +387,7 @@ class Comment(DictLike):
             upsert=True)
 
     def __updatedictionary__(self, gram):
+        """Create dictionary entries for any new grams"""
         dictionary = c['Dictionary'][gram.str_type]
         counters = c['Counter'][gram.str_type]
         term = gram.term
@@ -344,6 +408,7 @@ class Comment(DictLike):
             })
 
     def __updatecomment__(self):
+        """Insert instance into database"""
         collection = c['Comment'][self['source']]
         document = deepcopy(self.data)
         for str_type in self.str_classes:
@@ -351,6 +416,7 @@ class Comment(DictLike):
         return collection.insert_one(document)
 
     def insert(self):
+        """Perform all necessary database updates for instance"""
         success = False
         try:
             success = self.__updatecomment__()
@@ -368,7 +434,9 @@ class Comment(DictLike):
 # Array classes
 
 class ArrayLike(object):
-    """Acts like an array, but has database dictionary methods"""
+    """
+    Acts like an array, but supports both list-like and dict-like index methods.
+    """
 
     def __init__(self, data=None, n=1, str_type='String', null=0):
         self.data = []
@@ -382,6 +450,9 @@ class ArrayLike(object):
         self.dictionary = c['Dictionary'][self.str_type]
 
     def __add__(self, other):
+        """
+        Update values of array in place and return. Supports length coersion for ArrayLike and broadcasting for ints or floats
+        """
         if isinstance(other, int) | isinstance(other, float):
             self.data = [item + other for item in self.data]
             return self.data
@@ -403,10 +474,16 @@ class ArrayLike(object):
             return True
 
     def __forcelen__(self, length):
+        """Increase length of array by adding self.null items"""
         if length > len(self):
             self.data = self.data + [self.null] * (length - len(self))
 
     def __getitem__(self, key):
+        """
+        Returns value at index. If key not in self, returns self.null
+        key : int, str
+            Either the integer index of the item, or the term that is wanted
+        """
         if isinstance(key, int):
             ix = key
         else:
@@ -420,6 +497,7 @@ class ArrayLike(object):
             return self.null
 
     def __getix__(self, key):
+        """Get integer index given a key string"""
         if isinstance(key, str):
             pass
         elif isinstance(key, StringLike):
@@ -450,12 +528,18 @@ class ArrayLike(object):
         return len(self.data)
 
     def __matchlen__(self, other):
+        """
+        Match lengths of two ArrayLikes by padding the shorter one with self.null
+        """
         if len(self) > len(other):
             other.data = other.data + [self.null] * (len(self) - len(other))
         elif len(other) > len(self.data):
             self.data = self.data + [self.null] * (len(other) - len(self.data))
 
     def __mul__(self, other):
+        """
+        Update values of array in place and return. Supports length coersion for ArrayLike and broadcasting for ints or floats
+        """
         if isinstance(other, float) | isinstance(other, int):
             self.data = [item * other for item in self.data]
             return self.data
@@ -470,6 +554,9 @@ class ArrayLike(object):
         return '{} of length {}'.format(self.__class__(), len(self.data))
 
     def __setbyix__(self, key, value):
+        """
+        Set value by index. Supports setting values beyond the length of the data.
+        """
         try:
             self.data[key] = value
         except IndexError as e:
@@ -478,6 +565,9 @@ class ArrayLike(object):
                 self.data[key] = value
 
     def __setitem__(self, key, value):
+        """
+        Set value by index or key. Supports setting values beyond the length of the data.
+        """
         if isinstance(key, int):
             self.__setbyix__(key, value)
         else:
@@ -493,8 +583,17 @@ class ArrayLike(object):
 
 class Vector(ArrayLike):
     """
-    An ArrayLike of term frequencies for a given string type,
-    count type, gram length, and time period
+    An ArrayLike of language data for a given string type, count type, gram length, and time period.
+
+    The following are required:
+    source : str
+        Short name of source of events. Must be in database.
+    n : int
+        Length of grams
+    str_type : StringLike
+        String type of event data
+    count_type : str
+        Type of language data. Acceptable values are 'count', 'tf', 'tfidf', and 'activation'
     """
 
     def __init__(self, source, n, str_type, count_type, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
@@ -515,12 +614,14 @@ class Vector(ArrayLike):
         self.__fromdb__()
 
     def __fromdb__(self):
+        """Try fetching vector from cache, then build from comment data"""
         try:
             self.__fromcache__()
         except e.DocumentNotFound:
             self.__fromcursor__()
 
     def __fromcache__(self):
+        """Fetch vector from cache"""
         result = self.cache.find_one({
             'n' : self.n,
             'start_date' : self.start_date,
@@ -537,6 +638,7 @@ class Vector(ArrayLike):
             raise e.DocumentNotFound(self.n, 'date range')
 
     def __fromcursor__(self):
+        """Build vector from comment database"""
         counts = ArrayLike(n=self.n, str_type=self.str_type)
         documents = ArrayLike(n=self.n, str_type=self.str_type, null=set())
         users = ArrayLike(n=self.n, str_type=self.str_type, null=set())
@@ -564,6 +666,7 @@ class Vector(ArrayLike):
         self.__tocache__()
 
     def __tocache__(self):
+        """Insert vector into cache"""
         self.cache.update_one({
             'start_date' : self.start_date,
             'stop_date' : self.stop_date
@@ -573,17 +676,22 @@ class Vector(ArrayLike):
 
     @staticmethod
     def activation(users):
+        """
+        Calculate the probability that an individual used the terms in the vector
+        """
         inverse_total_users = len(Vector.unique(users)) ** -1
         users = ArrayLike([Vector.length(item) for item in users])
         return users * inverse_total_users
 
     @staticmethod
     def tf(counts):
+        """Calculate the proportional frequency of the terms in a vector"""
         inverse_total_counts = sum(counts) ** -1
         return counts * inverse_total_counts
 
     @staticmethod
     def tfidf(counts, documents):
+        """Calculate the tf-idf of the terms in a vector"""
         tf = ArrayLike(Vector.tf(counts))
         inverse_total_documents = len(Vector.unique(documents)) ** -1
         documents = ArrayLike([Vector.length(item) for item in documents])
@@ -592,6 +700,7 @@ class Vector(ArrayLike):
 
     @staticmethod
     def unique(array_like):
+        """Return set of unique elements in a list of sets"""
         total_set = set()
         for sub_list in array_like.data:
             if not sub_list:
@@ -601,6 +710,7 @@ class Vector(ArrayLike):
 
     @staticmethod
     def length(list_like):
+        """Return length of a list, or 0 if empty"""
         try:
             return len(list_like)
         except TypeError:
@@ -692,6 +802,7 @@ class Map(ArrayLike):
 
 @app.task(name='redicorpus.base.redicorpus.tokenize')
 def tokenize(string, str_type):
+    """Tokenize a string into StringLike objects"""
     return [str_type(token, pos) for token, pos in pos_tag(word_tokenize(string.lower()))]
 
 def get_comment(_id, source):
@@ -704,6 +815,7 @@ def get_comment(_id, source):
 
 @app.task
 def insert_comment(response):
+    """Create comment instance and insert it"""
     return Comment(response).insert()
 
 def get_body(source, n=1, str_type='String', count_type='count', start_date=utcnow().datetime, stop_date=utcnow().datetime):
@@ -715,6 +827,7 @@ def get_map(gram, source, n, position=0, start_date=Arrow(1970,1,1).datetime, st
     return Map(gram, source, position, start_date, stop_date)
 
 def get_datelimit(source):
+    """Fetch last datetime events were fetched from source"""
     try:
         datelimit = c['Comment']['LastUpdated'].find_one({
             'source' : source
@@ -728,6 +841,7 @@ def get_datelimit(source):
     return datelimit
 
 def set_datelimit(source, startdate):
+    """Set last datetime events were fetched from source"""
     c['Comment']['LastUpdated'].replace_one({
         'source' : source
     }, {
