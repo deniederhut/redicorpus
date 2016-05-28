@@ -9,7 +9,6 @@ from redicorpus.base import redicorpus as rc
 import time
 
 gram_length_list = [1, 2, 3]
-str_type_list = ['String', 'Stem', 'Lemma']
 
 def test_string():
     obj = rc.String('fried')
@@ -59,19 +58,19 @@ def test_comment():
     assert isinstance(rc.Comment(document)['Lemma'][0], rc.Lemma)
 
 def test_update_body():
-    for str_type in str_type_list:
+    for str_type in rc.StringLike.__subclasses__():
         document = c['Body']['test'].find_one()
         assert document
         assert len(document['users']) == 1
         assert document['count'] == len(document['polarity'])
 
 def test_update_dictionary():
-    for str_type in str_type_list:
+    for str_type in rc.StringLike.__subclasses__():
         for gram_length in gram_length_list:
-            counter = c['Counter'][str_type].find_one({'n' : gram_length})
+            counter = c['Counter'][str_type.__name__].find_one({'n' : gram_length})
             assert counter
             assert counter['counter'] > 1
-            document = c['Dictionary'][str_type].find_one()
+            document = c['Dictionary'][str_type.__name__].find_one()
             assert document
             assert document['ix'] <= counter['counter']
 
@@ -93,13 +92,13 @@ def test_insert_comment():
 def test_array_like():
     with pytest.raises(ValueError):
         rc.ArrayLike(n=1, str_type='Frayed')
-    array = rc.ArrayLike([1,2,3,4], 1, 'String')
+    array = rc.ArrayLike([1,2,3,4], 1, rc.String)
     assert str(array)
     assert array.n == 1
     assert array + 1 == [2, 3, 4, 5]
-    assert array + rc.ArrayLike([0, 1], 1, 'String') == [2, 4, 4, 5]
+    assert array + rc.ArrayLike([0, 1], 1, rc.String) == [2, 4, 4, 5]
     assert array * 2 == [4, 6, 8, 10]
-    assert array * rc.ArrayLike([0, 1], 1, 'String') == [0, 6, 0, 0]
+    assert array * rc.ArrayLike([0, 1], 1, rc.String) == [0, 6, 0, 0]
     assert 2 in array
     assert 'python' not in array
     assert array['the']
@@ -108,14 +107,14 @@ def test_array_like():
 
 def test_vector():
     with pytest.raises(ValueError):
-        rc.Vector(n=1, str_type='String', count_type='Lemma', source='Blue')
+        rc.Vector(n=1, str_type=rc.String, count_type=rc.Activation, source='Blue')
     with pytest.raises(ValueError):
-        rc.Vector(n=1, str_type='Frayed', count_type='Lemma', source='test')
+        rc.Vector(n=1, str_type='Frayed', count_type=rc.Tf, source='test')
     with pytest.raises(TypeError):
-        rc.Vector(n=1, str_type='String', count_type='Lemma', source='test', start_date='now')
+        rc.Vector(n=1, str_type=rc.String, count_type='Lemma', source='test', start_date='now')
     for count_type in rc.Count.__subclasses__():
         for gram_length in gram_length_list:
-            for str_type in str_type_list:
+            for str_type in rc.StringLike.__subclasses__():
                 vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
                 assert vector.n == gram_length
                 assert vector.start_date == Arrow(1970, 1, 1, 0, 0).datetime
