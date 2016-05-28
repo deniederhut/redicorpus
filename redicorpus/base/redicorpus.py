@@ -547,16 +547,16 @@ class ArrayLike(object):
     Acts like an array, but supports both list-like and dict-like index methods.
     """
 
-    def __init__(self, data=None, n=1, str_type='String', null=0):
+    def __init__(self, data=None, n=1, str_type=String, null=0):
         self.data = []
         self.null = null
         if data:
             self.data = data
         self.n = n
-        if str_type not in [subclass.__name__ for subclass in StringLike.__subclasses__()]:
+        if str_type not in StringLike.__subclasses__():
             raise ValueError("{} is not a valid string type class".format(str_type))
         self.str_type = str_type
-        self.dictionary = c['Dictionary'][self.str_type]
+        self.dictionary = c['Dictionary'][self.str_type.__name__]
 
     def __add__(self, other):
         """
@@ -700,16 +700,16 @@ class Vector(ArrayLike):
     n : int
         Length of grams
     str_type : StringLike
-        String type of event data
-    count_type : str
-        Type of language data. Acceptable values are 'count', 'tf', 'tfidf', and 'activation'
+        Class of string data
+    count_type : Count
+        Class of language data
     """
 
     def __init__(self, source, n, str_type, count_type, start_date=Arrow(1970,1,1).datetime, stop_date=utcnow().datetime):
         super(Vector, self).__init__(n=n, str_type=str_type)
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in the Comment database".format(source))
-        if str_type not in [string_like.__name__ for string_like in StringLike.__subclasses__()]:
+        if str_type not in StringLike.__subclasses__():
             raise ValueError("{} is not a valid string type class".format(str_type))
         for date in [start_date, stop_date]:
             if not isinstance(date, datetime):
@@ -760,7 +760,7 @@ class Vector(ArrayLike):
                 '$gt' : self.start_date, '$lt' : self.stop_date
             },
             'n' : self.n,
-            'str_type' : self.str_type
+            'str_type' : self.str_type.__name__
         }):
             ix = results['counts'].__getix__(document['term'])
             results['counts'][ix] += document['count']
@@ -881,7 +881,7 @@ def insert_comment(response):
     """Create comment instance and insert it"""
     return Comment(response).insert()
 
-def get_body(source, n=1, str_type='String', count_type=Count, start_date=utcnow().datetime, stop_date=utcnow().datetime):
+def get_body(source, n=1, str_type=String, count_type=Count, start_date=utcnow().datetime, stop_date=utcnow().datetime):
     """Retrieve counts by date and type"""
     return Vector(source, n, str_type, count_type, start_date, stop_date)
 
