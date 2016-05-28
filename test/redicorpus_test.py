@@ -8,7 +8,6 @@ from redicorpus import c
 from redicorpus.base import redicorpus as rc
 import time
 
-count_type_list = ['activation', 'count', 'tf', 'tfidf']
 gram_length_list = [1, 2, 3]
 str_type_list = ['String', 'Stem', 'Lemma']
 
@@ -114,7 +113,7 @@ def test_vector():
         rc.Vector(n=1, str_type='Frayed', count_type='Lemma', source='test')
     with pytest.raises(TypeError):
         rc.Vector(n=1, str_type='String', count_type='Lemma', source='test', start_date='now')
-    for count_type in count_type_list:
+    for count_type in rc.Count.__subclasses__():
         for gram_length in gram_length_list:
             for str_type in str_type_list:
                 vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
