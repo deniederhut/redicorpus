@@ -21,6 +21,115 @@ from redicorpus.celery import app
 import warnings
 
 
+# Count interfaces
+
+class Count(object):
+
+    def __init__(self, counts, documents, users):
+        self.counts = counts
+        self.documents = documents
+        self.users = users
+
+    def __class__(self):
+        return "Count"
+
+    def count_documents(self):
+        """Return ArrayLike of number of documents"""
+        return ArrayLike([self.length(item) for item in self.documents])
+
+    def count_users(self):
+        """Return ArrayLike of number of users"""
+        return ArrayLike([self.length(item) for item in self.users])
+
+    def get(self):
+        return self.counts.data
+
+    def inverse_total_counts(self):
+        """Return inverse of count total"""
+        return sum(self.counts) ** -1
+
+    def inverse_total_documents(self):
+        """Return inverse of document total"""
+        return len(self.unique_documents()) ** -1
+
+    def inverse_total_users(self):
+        """Return inverse of user total"""
+        return len(self.unique_users()) ** -1
+
+    @staticmethod
+    def length(list_like):
+        try:
+            return len(list_like)
+        except TypeError:
+            return 0
+
+    @staticmethod
+    def unique(list_like):
+        """Return set of items from a list of sets of items"""
+        total_set = set()
+        for sub_list in list_like:
+            if not sub_list:
+                sub_list = set()
+            total_set = total_set | set(sub_list)
+        return total_set
+
+    def unique_documents(self):
+        """Return set of documents from a list of sets of documents"""
+        return self.unique(self.documents)
+
+    def unique_users(self):
+        """Return set of users from a list of sets of users"""
+        return self.unique(self.documents)
+
+
+class Tf(Count):
+
+    def __init__(self, counts, documents, users):
+        super(Tf, self).__init__(counts, documents, users)
+
+    def __class__(self):
+        return "Tf"
+
+    def get(self):
+        """Calculate the proportional frequency of the terms in a vector"""
+        inverse = self.inverse_total_counts()
+        return self.counts * inverse
+
+
+class Tfidf(Count):
+
+    def __init__(self, counts, documents, users):
+        super(Tfidf, self).__init__(counts, documents, users)
+        self.tf = Tf
+
+        def __class__(self):
+            return "Tfidf"
+
+    def get(self):
+        """Calculate the tf-idf of the terms in a vector"""
+        tf = ArrayLike(self.tf(self.counts, self.documents, self.users).get())
+        inverse = self.inverse_total_documents()
+        documents = self.count_documents()
+        idf = ArrayLike([ log( (item + 1) * inverse ) for item in documents])
+        return tf * idf
+
+class Activation():
+
+    def __init__(self, counts, documents, users):
+        super(Activation, self).__init__(counts, documents, users)
+
+    def __class__(self):
+        return "Activation"
+
+    def activation(users):
+        """
+        Calculate the probability that an individual used the terms in the vector
+        """
+        inverse = self.inverse_total_users()
+        users = ArrayLike([Vector.length(item) for item in users])
+        return users * inverse_total_users
+
+
 # String classes
 
 class StringLike(object):
@@ -626,22 +735,26 @@ class Vector(ArrayLike):
             'n' : self.n,
             'start_date' : self.start_date,
             'stop_date' : self.stop_date,
-            self.count_type : {
+            self.count_type.__name__ : {
                 '$exists' : True
             }
         }, {
-            self.count_type : 1
+            self.count_type.__name__ : 1
         })
         if result:
-            self.data = result[self.count_type]
+            self.data = result[self.count_type.__name__]
         else:
             raise e.DocumentNotFound(self.n, 'date range')
 
     def __fromcursor__(self):
         """Build vector from comment database"""
-        counts = ArrayLike(n=self.n, str_type=self.str_type)
-        documents = ArrayLike(n=self.n, str_type=self.str_type, null=set())
-        users = ArrayLike(n=self.n, str_type=self.str_type, null=set())
+        # Initialize data structure
+        results = {
+        'counts' : ArrayLike(n=self.n, str_type=self.str_type),
+        'documents' : ArrayLike(n=self.n, str_type=self.str_type, null=set()),
+        'users' : ArrayLike(n=self.n, str_type=self.str_type, null=set())
+        }
+        # Pull data from cursor
         for document in self.collection.find({
             'date' : {
                 '$gt' : self.start_date, '$lt' : self.stop_date
@@ -649,20 +762,12 @@ class Vector(ArrayLike):
             'n' : self.n,
             'str_type' : self.str_type
         }):
-            ix = counts.__getix__(document['term'])
-            counts[ix] += document['count']
-            documents[ix] = documents[ix] | set(document['documents'])
-            users[ix] = documents[ix] | set(document['users'])
-        if self.count_type == 'activation':
-            self.data = self.activation(users)
-        elif self.count_type == 'count':
-            self.data = counts.data
-        elif self.count_type == 'tf':
-            self.data = self.tf(counts)
-        elif self.count_type == 'tfidf':
-            self.data = self.tfidf(counts, documents)
-        else:
-            raise ValueError("Expected one of 'activation', 'count', 'tf', or 'tfidf'")
+            ix = results['counts'].__getix__(document['term'])
+            results['counts'][ix] += document['count']
+            results['documents'][ix] = results['documents'][ix] | set(document['documents'])
+            results['users'][ix] = results['documents'][ix] | set(document['users'])
+        # Get appropriate count type result
+        self.data = self.count_type(**results).get()
         self.__tocache__()
 
     def __tocache__(self):
@@ -671,50 +776,8 @@ class Vector(ArrayLike):
             'start_date' : self.start_date,
             'stop_date' : self.stop_date
         }, {
-            '$set' : {self.count_type : self.data}
+            '$set' : {self.count_type.__name__ : self.data}
         }, upsert=True)
-
-    @staticmethod
-    def activation(users):
-        """
-        Calculate the probability that an individual used the terms in the vector
-        """
-        inverse_total_users = len(Vector.unique(users)) ** -1
-        users = ArrayLike([Vector.length(item) for item in users])
-        return users * inverse_total_users
-
-    @staticmethod
-    def tf(counts):
-        """Calculate the proportional frequency of the terms in a vector"""
-        inverse_total_counts = sum(counts) ** -1
-        return counts * inverse_total_counts
-
-    @staticmethod
-    def tfidf(counts, documents):
-        """Calculate the tf-idf of the terms in a vector"""
-        tf = ArrayLike(Vector.tf(counts))
-        inverse_total_documents = len(Vector.unique(documents)) ** -1
-        documents = ArrayLike([Vector.length(item) for item in documents])
-        idf = ArrayLike([ log( (item + 1) * inverse_total_documents ) for item in documents])
-        return tf * idf
-
-    @staticmethod
-    def unique(array_like):
-        """Return set of unique elements in a list of sets"""
-        total_set = set()
-        for sub_list in array_like.data:
-            if not sub_list:
-                sub_list = set()
-            total_set = total_set | set(sub_list)
-        return total_set
-
-    @staticmethod
-    def length(list_like):
-        """Return length of a list, or 0 if empty"""
-        try:
-            return len(list_like)
-        except TypeError:
-            return 0
 
 
 class Map(ArrayLike):
@@ -818,7 +881,7 @@ def insert_comment(response):
     """Create comment instance and insert it"""
     return Comment(response).insert()
 
-def get_body(source, n=1, str_type='String', count_type='count', start_date=utcnow().datetime, stop_date=utcnow().datetime):
+def get_body(source, n=1, str_type='String', count_type=Count, start_date=utcnow().datetime, stop_date=utcnow().datetime):
     """Retrieve counts by date and type"""
     return Vector(source, n, str_type, count_type, start_date, stop_date)
 
