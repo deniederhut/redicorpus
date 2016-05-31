@@ -30,7 +30,7 @@ class Count(object):
         self.users = users
 
     def __class__(self):
-        return "Count"
+        return Count
 
     def count_documents(self):
         """Return ArrayLike of number of documents"""
@@ -87,7 +87,7 @@ class Tf(Count):
         super(Tf, self).__init__(counts, documents, users)
 
     def __class__(self):
-        return "Tf"
+        return Tf
 
     def get(self):
         """Calculate the proportional frequency of the terms in a vector"""
@@ -102,7 +102,7 @@ class Tfidf(Count):
         self.tf = Tf
 
         def __class__(self):
-            return "Tfidf"
+            return Tfidf
 
     def get(self):
         """Calculate the tf-idf of the terms in a vector"""
@@ -118,7 +118,7 @@ class Activation():
         super(Activation, self).__init__(counts, documents, users)
 
     def __class__(self):
-        return "Activation"
+        return Activation
 
     def activation(users):
         """
@@ -145,7 +145,7 @@ class StringLike(object):
         return self.term + str(x)
 
     def __class__(self):
-        return "StringLike"
+        return StringLike
 
     def __iter__(self):
         for character in self.term:
@@ -217,7 +217,7 @@ class String(StringLike):
         self.term = self.raw
 
     def __class__(self):
-        return "String"
+        return String
 
 
 class Stem(StringLike):
@@ -229,7 +229,7 @@ class Stem(StringLike):
             self.term = self.stemmer(data)
 
     def __class__(self):
-        return "Stem"
+        return Stem
 
     def stemmer(self, data):
         """Return stemmed data"""
@@ -245,7 +245,7 @@ class Lemma(StringLike):
             self.term = self.lemmer(data, self.pos)
 
     def __class__(self):
-        return "Lemma"
+        return Lemma
 
     def lemmer(self, data, pos=None):
         """
@@ -264,7 +264,7 @@ class Gram(object):
         if len(self) > 1:
             if len(set([type(item) for item in self.gram])) > 1:
                 raise TypeError("Gram components must be the same type")
-        self.str_type = self.gram[0].__class__()
+        self._str_type = self.gram[0].__class__()
 
     def __fromdb__(self, document):
         """Make instance from database representation"""
@@ -319,12 +319,12 @@ class Gram(object):
         return tuple([item.raw for item in self.gram])
 
     @property
-    def string_type(self):
+    def str_type(self):
         """Get string class of terms in gram"""
         return self._str_type
 
-    @string_type.setter
-    def string_type(self, value):
+    @str_type.setter
+    def str_type(self, value):
         if value in StringLike.__subclasses__().__name__:
             self._str_type = value
         else:
@@ -348,7 +348,7 @@ class DictLike(object):
         self.str_classes = StringLike.__subclasses__()
 
     def __class__(self):
-        return "DictLike"
+        return DictLike
 
     def __getitem__(self, key):
         return self.data.get(key)
@@ -439,7 +439,7 @@ class Comment(DictLike):
             self[str_type.__name__] = [str_type(token, pos) for token, pos in pos_tag(word_tokenize(self['cooked'].lower()))]
 
     def __class__(self):
-        return "Comment"
+        return Comment
 
     def __fromdocument__(self, data):
         """Make instance from database document"""
@@ -559,7 +559,7 @@ class ArrayLike(object):
             return result
 
     def __class__(self):
-        return "ArrayLike"
+        return ArrayLike
 
     def __contains__(self, key):
         result = self.__getitem__(key)
@@ -593,9 +593,7 @@ class ArrayLike(object):
 
     def __getix__(self, key):
         """Get integer index given a key string"""
-        if isinstance(key, str):
-            pass
-        elif isinstance(key, StringLike):
+        if isinstance(key, StringLike):
             key = Gram(key).term
         elif isinstance(key, Gram):
             key = key.term
@@ -604,7 +602,7 @@ class ArrayLike(object):
         elif isinstance(key, list) & isinstance(key[0], str):
             key = tuple(key)
         else:
-            raise TypeError("Expected str, StringLike, or tuple of StringLikes")
+            raise TypeError("Expected StringLike, or tuple of StringLikes")
         try:
             ix = self.dictionary.find_one(
             {
@@ -667,7 +665,7 @@ class ArrayLike(object):
             self.__setbyix__(key, value)
         else:
             ix = self.__getix__(key)
-            if ix:
+            if ix != None:
                 self.__setbyix__(ix, value)
             else:
                 raise ValueError("Term not in dictionary")
@@ -784,6 +782,7 @@ class Map(ArrayLike):
             raise TypeError("{} must be StringLike or Gram".format(self.term))
         if source not in c['Comment'].collection_names():
             raise ValueError("{} is not a collection in Comment")
+        self.dictionary = c['Dictionary'][self.str_type.__name__]
 
         self.start_date = start_date
         self.stop_date = stop_date
@@ -814,7 +813,7 @@ class Map(ArrayLike):
         for document in c['Body'][self.source].find({
             'term' : self.term,
             'date' : {'$gt' : self.start_date, '$lt' : self.stop_date},
-            'str_type' : self.str_type,
+            'str_type' : self.str_type.__name__,
             'n' : self.n
         }, {
         'documents' : 1
@@ -822,7 +821,7 @@ class Map(ArrayLike):
             for _id in document['documents']:
                 comment = get_comment(_id, self.source)
                 gram_list = []
-                for ngram in ngrams(comment[self.str_type], self.n):
+                for ngram in ngrams(comment[self.str_type.__name__], self.n):
                     gram_list.append(Gram(ngram).term)
                 if self.position:
                     loc = gram_list.index(self.term) + position
