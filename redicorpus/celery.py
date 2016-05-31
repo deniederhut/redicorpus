@@ -9,7 +9,7 @@ app = Celery('redicorpus',
              backend='rpc://',
              include=[
                 'redicorpus',
-                 'redicorpus.base.redicorpus',
+                'redicorpus.objects',
                  'test'
                  ]
              )

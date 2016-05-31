@@ -5,15 +5,14 @@ from __future__ import absolute_import
 from datetime import datetime, timedelta
 from pkg_resources import require
 import praw
-import re
-from redicorpus.base import redicorpus
+from redicorpus import objects, tools
 
 class Client(object):
 
     def __init__(self, source):
         self.user_agent = "redicorpus version {} by /u/MonsieurDufayel".format(require('redicorpus')[0].version)
         self.c = praw.Reddit(user_agent=self.user_agent)
-        self.datelimit = redicorpus.get_datelimit(source)
+        self.datelimit = objects.get_datelimit(source)
         self.new_date = datetime.utcnow()
         self.source = source
 
@@ -33,7 +32,7 @@ class Client(object):
             after = r[-1].name
             r = self.getlisting(params={'after' : after})
             date = datetime.utcfromtimestamp(r[0].created_utc)
-        redicorpus.set_datelimit(self.source, self.new_date)
+        objects.set_datelimit(self.source, self.new_date)
 
 class Response(object):
 
@@ -73,16 +72,7 @@ class Response(object):
             self['children'] = self.response['replies']
         except KeyError:
             self['children'] = []
-        self['cooked'], self['links'] = parse_markdown(self['raw'])
-
-
-def parse_markdown(text):
-    link_list = []
-    p = re.compile(r'\[(?P<text>.+)\]\((?P<link>.+)\)')
-    for match in p.finditer(text):
-        link_list.append(match.group('link'))
-        text = text.replace(match.group(), match.group('text'))
-    return text, link_list
+        self['cooked'], self['links'] = tools.parse_markdown(self['raw'])
 
 
 if __name__ == '__main__':
@@ -94,4 +84,4 @@ if __name__ == '__main__':
 
     reddit = Client(source=args.source)
     for comment in reddit.request():
-        redicorpus.insert_comment.apply_async(args=[comment.translation])
+        objects.insert_comment.apply_async(args=[comment.translation])

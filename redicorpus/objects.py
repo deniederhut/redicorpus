@@ -15,11 +15,10 @@ from math import log
 from nltk import ngrams, word_tokenize, pos_tag, SnowballStemmer, WordNetLemmatizer
 from pymongo.errors import DuplicateKeyError
 from pymongo.collection import ReturnDocument
-from redicorpus import c
+from redicorpus import c, tools
 from redicorpus import exceptions as e
 from redicorpus.celery import app
 import warnings
-
 
 # Count interfaces
 
@@ -254,21 +253,8 @@ class Lemma(StringLike):
         pos : str
             Should be one of 'v', 'r', 'a', or 'n'
         """
-        return WordNetLemmatizer().lemmatize(data, self.pos_to_wordnet(pos))
+        return WordNetLemmatizer().lemmatize(data, tools.pos_to_wordnet(pos))
 
-    @staticmethod
-    def pos_to_wordnet(pos):
-        """
-        Convert NLTK-style part of speech tag to WordNet-style part of speech tag
-        """
-        if pos in ['VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']:
-            return 'v'
-        elif pos in ['RB', 'RBR', 'RBS']:
-            return 'r'
-        elif pos in ['JJ', 'JJR', 'JJS']:
-            return 'a'
-        else:
-            return 'n'
 
 class Gram(object):
     """Acts like a tuple, but for StringLike objects"""
@@ -450,7 +436,7 @@ class Comment(DictLike):
             else:
                 self.__fromdict__(data)
         for str_type in self.str_classes:
-            self[str_type.__name__] = tokenize.apply(args=[self['cooked'], str_type]).result
+            self[str_type.__name__] = [str_type(token, pos) for token, pos in pos_tag(word_tokenize(self['cooked'].lower()))]
 
     def __class__(self):
         return "Comment"
@@ -863,11 +849,6 @@ class Map(ArrayLike):
 
 # Module functions
 
-@app.task(name='redicorpus.base.redicorpus.tokenize')
-def tokenize(string, str_type):
-    """Tokenize a string into StringLike objects"""
-    return [str_type(token, pos) for token, pos in pos_tag(word_tokenize(string.lower()))]
-
 def get_comment(_id, source):
     """Retrieve comment from db"""
     document = c['Comment'][source].find_one({'_id' : _id})
@@ -911,7 +892,3 @@ def set_datelimit(source, startdate):
         'source' : source,
         'date' : startdate
     })
-
-def zipf_test(x, y=None):
-    """Conduct one-way or two-way Zipf test on ArrayLike objects"""
-    pass
