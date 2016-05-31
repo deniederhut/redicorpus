@@ -58,7 +58,7 @@ install :
     - python setup.py install
 
 before_script :
-    - celery -A redicorpus worker &
+    - celery worker --app=redicorpus.celery:app &
     - sleep 15
 
 script : py.test --cov=redicorpus
