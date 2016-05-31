@@ -4,14 +4,13 @@ from arrow import Arrow
 from datetime import datetime
 import json
 import pytest
-from redicorpus import c
-from redicorpus.base import redicorpus as rc
+from redicorpus import c, objects
 import time
 
 gram_length_list = [1, 2, 3]
 
 def test_string():
-    obj = rc.String('fried')
+    obj = objects.String('fried')
     assert str(obj) == 'fried'
     assert len(obj) == 5
     assert obj + ' pickles' == 'fried pickles'
@@ -23,19 +22,19 @@ def test_string():
     assert obj.__totuple__() == ('fried', 'fried', 'VBN', 'String')
 
 def test_stem():
-    obj = rc.Stem('fried')
+    obj = objects.Stem('fried')
     assert obj.__totuple__() == ('fri', 'fried', 'VBN', 'Stem')
 
 def test_lemma():
-    obj = rc.Lemma('fried')
+    obj = objects.Lemma('fried')
     assert obj.__totuple__() == ('fry', 'fried', 'VBN', 'Lemma')
 
 def test_dict_like():
     with pytest.raises(TypeError):
-        rc.DictLike().__fromdict__('blue')
+        objects.DictLike().__fromdict__('blue')
     with pytest.raises(ValueError):
-        rc.DictLike().__fromdict__({'raw' : 'blue'})
-    obj = rc.DictLike()
+        objects.DictLike().__fromdict__({'raw' : 'blue'})
+    obj = objects.DictLike()
     obj['test'] = 42
     assert dict(obj)
     assert list(obj.items()) == [('test', 42)]
@@ -44,8 +43,8 @@ def test_comment():
     with open('test/data/comment.json', 'r') as f:
         data = json.load(f)
     data['date'] = datetime.fromtimestamp(data['date'])
-    comment = rc.Comment(data)
-    assert isinstance(comment, rc.DictLike)
+    comment = objects.Comment(data)
+    assert isinstance(comment, objects.DictLike)
     assert len(comment)
     assert comment['_id'] == 'd024gzv'
     assert dict(comment)
@@ -55,17 +54,17 @@ def test_comment():
     comment.insert()
     comment.insert()
     document = c['Comment']['test'].find_one()
-    assert isinstance(rc.Comment(document)['Lemma'][0], rc.Lemma)
+    assert isinstance(objects.Comment(document)['Lemma'][0], objects.Lemma)
 
 def test_update_body():
-    for str_type in rc.StringLike.__subclasses__():
+    for str_type in objects.StringLike.__subclasses__():
         document = c['Body']['test'].find_one()
         assert document
         assert len(document['users']) == 1
         assert document['count'] == len(document['polarity'])
 
 def test_update_dictionary():
-    for str_type in rc.StringLike.__subclasses__():
+    for str_type in objects.StringLike.__subclasses__():
         for gram_length in gram_length_list:
             counter = c['Counter'][str_type.__name__].find_one({'n' : gram_length})
             assert counter
@@ -79,64 +78,61 @@ def test_update_source():
     assert document
 
 def test_get_comment():
-    comment = rc.get_comment('d024gzv', 'test')
+    comment = objects.get_comment('d024gzv', 'test')
     assert comment
 
 def test_insert_comment():
     c['Comment']['test'].delete_one({'_id' : 'd024gzv'})
     with open('test/data/comment.json', 'r') as f:
         data = json.load(f)
-    obj = rc.insert_comment.delay(data)
+    obj = objects.insert_comment.delay(data)
     assert obj.get()
 
 def test_array_like():
     with pytest.raises(ValueError):
-        rc.ArrayLike(n=1, str_type='Frayed')
-    array = rc.ArrayLike([1,2,3,4], 1, rc.String)
+        objects.ArrayLike(n=1, str_type='Frayed')
+    array = objects.ArrayLike([1,2,3,4], 1, objects.String)
     assert str(array)
     assert array.n == 1
     assert array + 1 == [2, 3, 4, 5]
-    assert array + rc.ArrayLike([0, 1], 1, rc.String) == [2, 4, 4, 5]
+    assert array + objects.ArrayLike([0, 1], 1, objects.String) == [2, 4, 4, 5]
     assert array * 2 == [4, 6, 8, 10]
-    assert array * rc.ArrayLike([0, 1], 1, rc.String) == [0, 6, 0, 0]
+    assert array * objects.ArrayLike([0, 1], 1, objects.String) == [0, 6, 0, 0]
     assert 2 in array
     assert 'python' not in array
     assert array['the']
     array['the'] = 1
-    assert array[rc.String('the')]
+    assert array[objects.String('the')]
 
 def test_vector():
     with pytest.raises(ValueError):
-        rc.Vector(n=1, str_type=rc.String, count_type=rc.Activation, source='Blue')
+        objects.Vector(n=1, str_type=objects.String, count_type=objects.Activation, source='Blue')
     with pytest.raises(ValueError):
-        rc.Vector(n=1, str_type='Frayed', count_type=rc.Tf, source='test')
+        objects.Vector(n=1, str_type='Frayed', count_type=objects.Tf, source='test')
     with pytest.raises(TypeError):
-        rc.Vector(n=1, str_type=rc.String, count_type='Lemma', source='test', start_date='now')
-    for count_type in rc.Count.__subclasses__():
+        objects.Vector(n=1, str_type=objects.String, count_type='Lemma', source='test', start_date='now')
+    for count_type in objects.Count.__subclasses__():
         for gram_length in gram_length_list:
-            for str_type in rc.StringLike.__subclasses__():
-                vector = rc.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
+            for str_type in objects.StringLike.__subclasses__():
+                vector = objects.Vector(n=gram_length, str_type=str_type, count_type=count_type, source='test')
                 assert vector.n == gram_length
                 assert vector.start_date == Arrow(1970, 1, 1, 0, 0).datetime
                 assert len(vector) >= 100
 
 def test_get_body():
-    vector = rc.get_body(source='test', start_date=datetime(2016,2,15), stop_date=datetime(2016,2,18))
+    vector = objects.get_body(source='test', start_date=datetime(2016,2,15), stop_date=datetime(2016,2,18))
     assert vector
 
 def test_map():
-    mapping = rc.Map(gram=rc.String('proof'), source='test')
+    mapping = objects.Map(gram=objects.String('proof'), source='test')
 
 def test_get_map():
-    rc.get_map(gram=rc.String('proof'), source='test', n=1)
+    objects.get_map(gram=objects.String('proof'), source='test', n=1)
 
 def test_get_datelimit():
-    assert rc.get_datelimit('test') < datetime.utcnow()
+    assert objects.get_datelimit('test') < datetime.utcnow()
 
 def test_set_datelimit():
     date = datetime(2015,1,1)
-    rc.set_datelimit('test', date)
-    assert rc.get_datelimit('test') == date
-
-def test_zipf_test():
-    rc.zipf_test(rc.ArrayLike())
+    objects.set_datelimit('test', date)
+    assert objects.get_datelimit('test') == date

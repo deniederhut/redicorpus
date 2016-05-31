@@ -13,12 +13,6 @@ def get_data():
     string = resource_string('test', 'data/raw_reddit.json').decode('utf-8')
     return json.loads(string)
 
-def test_parse_markdown():
-    data = "[Trump's wall just got 10 feet higher!](https://youtu.be/gPfJwc8Cwao?t=19s) \n\n#Total height: 70ft. \n\n***** \n\nBot by /u/TonySesek556"
-    text, links = reddit.parse_markdown(data)
-    assert text == "Trump's wall just got 10 feet higher! \n\n#Total height: 70ft. \n\n***** \n\nBot by /u/TonySesek556"
-    assert links == ['https://youtu.be/gPfJwc8Cwao?t=19s']
-
 def test_response():
     data = get_data()
     response = reddit.Response(data, 'test')
