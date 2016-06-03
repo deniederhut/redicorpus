@@ -99,8 +99,8 @@ def test_array_like():
     assert array * 2 == [4, 6, 8, 10]
     assert array * objects.ArrayLike([0, 1], 1, objects.String) == [0, 6, 0, 0]
     assert 2 in array
-    assert 'python' not in array
-    assert array['the']
+    assert (objects.String('python'), ) not in array
+    assert array[objects.String('the')]
     array['the'] = 1
     assert array[objects.String('the')]
 

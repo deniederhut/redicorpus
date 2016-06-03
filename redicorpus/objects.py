@@ -140,6 +140,7 @@ class StringLike(object):
                 self.__fromstring__(data, pos)
             elif isinstance(data, tuple):
                 self.__fromtuple__(data)
+        self.term = self.raw
 
     def __add__(self, x):
         return self.term + str(x)
@@ -158,7 +159,7 @@ class StringLike(object):
         return self.term * x
 
     def __repr__(self):
-        return self.term
+        return self.__totuple__()
 
     def __str__(self):
         return self.term
@@ -179,7 +180,7 @@ class StringLike(object):
 
     def __totuple__(self):
         """Make instance from tuple"""
-        return self.term, self.raw, self.pos, self.__class__()
+        return self.term, self.raw, self.pos, self.__class__().__name__
 
     @property
     def term(self):
@@ -290,7 +291,7 @@ class Gram(object):
         'term' : tuple([item.term for item in self.gram]),
         'raw' : tuple([item.raw for item in self.gram]),
         'pos' : tuple([item.pos for item in self.gram]),
-        'str_type' : self.str_type
+        'str_type' : self.str_type.__name__
         }
 
     @property
@@ -357,13 +358,13 @@ class DictLike(object):
         return len(self.data.keys())
 
     def __repr__(self):
-        return '{} from {}, with data:\n\n {}'.format(self.__class__(), self['source'], self['raw'])
+        return '{} from {}, with data:\n\n {}'.format(self.__class__().__name__, self['source'], self['raw'])
 
     def __setitem__(self, key, value):
         self.data[key] = value
 
     def __str__(self):
-        return str(self.data)
+        return self['cooked']
 
     def __fromdict__(self, data):
         """Make instance from document"""
@@ -464,7 +465,7 @@ class Comment(DictLike):
             'raw' : raw,
             'pos' : pos,
             'n' : len(gram),
-            'str_type' : gram.str_type
+            'str_type' : gram.str_type.__name__
             }, {
             '$inc' : {
                 'count' : 1, 'total' : 1
@@ -483,8 +484,8 @@ class Comment(DictLike):
 
     def __updatedictionary__(self, gram):
         """Create dictionary entries for any new grams"""
-        dictionary = c['Dictionary'][gram.str_type]
-        counters = c['Counter'][gram.str_type]
+        dictionary = c['Dictionary'][gram.str_type.__name__]
+        counters = c['Counter'][gram.str_type.__name__]
         term = gram.term
         n = len(gram)
         if not dictionary.find_one({'term' : term, 'n' : n}):
@@ -593,14 +594,18 @@ class ArrayLike(object):
 
     def __getix__(self, key):
         """Get integer index given a key string"""
-        if isinstance(key, StringLike):
-            key = Gram(key).term
-        elif isinstance(key, Gram):
+        if isinstance(key, Gram):
             key = key.term
-        elif isinstance(key, tuple) & isinstance(key[0], str):
-            key = key
-        elif isinstance(key, list) & isinstance(key[0], str):
-            key = tuple(key)
+        elif isinstance(key, StringLike):
+            key = Gram(key).term
+        elif isinstance(key, str):
+            key = Gram([self.str_type(item) for item in key.split()]).term
+        elif isinstance(key, tuple):
+            if isinstance(key[0], StringLike):
+                key = [item.term for item in key]
+        elif isinstance(key, list):
+            if isinstance(key[0], StringLike):
+                key = [item.term for item in key]
         else:
             raise TypeError("Expected StringLike, or tuple of StringLikes")
         try:
