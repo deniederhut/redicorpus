@@ -17,21 +17,19 @@ class Client(object):
         self.source = source
 
     def getlisting(self, params=None):
-        return list(self.c.get_comments(self.source, params))
+        return self.c.get_comments(self.source, **params)
 
     def request(self):
-        r = self.getlisting()
-        date = datetime.utcfromtimestamp(r[0].created_utc)
-        while date > self.datelimit:
-            for comment in r:
-                result = Response(comment, self.source)
-                if result['author']:
-                    yield result
-                else:
-                    pass
-            after = r[-1].name
-            r = self.getlisting(params={'after' : after})
-            date = datetime.utcfromtimestamp(r[0].created_utc)
+        params = {'limit' : None, 'sort' : 'new'}
+        r = self.getlisting(params)
+        for comment in r:
+            if datetime.utcfromtimestamp(comment.created_utc) > self.datelimit:
+                if isinstance(comment, praw.objects.Comment):
+                    result = Response(comment, self.source)
+                    if result['author']:
+                        yield result
+            else:
+                break
         objects.set_datelimit(self.source, self.new_date)
 
 class Response(object):
