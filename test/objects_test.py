@@ -43,7 +43,7 @@ def test_dict_like():
 def test_comment():
     with open('test/data/comment.json', 'r') as f:
         data = json.load(f)
-    data['date'] = datetime.fromtimestamp(data['date'])
+    data['date'] = datetime.utcfromtimestamp(data['date'])
     comment = objects.Comment(data)
     assert isinstance(comment, objects.DictLike)
     assert len(comment)
@@ -59,7 +59,7 @@ def test_comment():
 
 def test_update_body():
     for str_type in objects.StringLike.__subclasses__():
-        document = c['Body']['test'].find_one()
+        document = c['Body']['test'].find_one({'str_type' : str_type.__name__})
         assert document
         assert len(document['users']) == 1
         assert document['count'] == len(document['polarity'])
@@ -120,7 +120,7 @@ def test_vector():
                 assert len(vector) >= 100
 
 def test_get_body():
-    vector = objects.get_body(source='test', start_date=datetime(2016,2,15), stop_date=datetime(2016,2,18))
+    vector = objects.get_body(source='test', start_date=Arrow(2016,2,15).datetime, stop_date=Arrow(2016,2,18).datetime)
     assert vector
 
 def test_map():

@@ -343,8 +343,10 @@ class DictLike(object):
 
     def __init__(self, data=None, n_list=[1,2,3]):
         self.data = {}
-        if data:
+        if isinstance(data, dict):
             self.data = data
+            if isinstance(self.data['date'], float):
+                self.data['date'] = datetime.utcfromtimestamp(self.data['date'])
         self.n_list = n_list
         self.str_classes = StringLike.__subclasses__()
 
@@ -459,7 +461,6 @@ class Comment(DictLike):
         collection.update_one(
             {
             'date' : round_date,
-            'level' : level,
             'term' : gram.term,
             'raw' : gram.raw,
             'pos' : gram.pos,
