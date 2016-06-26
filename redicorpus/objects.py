@@ -138,7 +138,7 @@ class StringLike(object):
         if data:
             if isinstance(data, str):
                 self.__fromstring__(data, pos)
-            elif isinstance(data, tuple):
+            elif isinstance(data, tuple) | isinstance(data, list):
                 self.__fromtuple__(data)
         self.term = self.raw
 
@@ -159,7 +159,7 @@ class StringLike(object):
         return self.term * x
 
     def __repr__(self):
-        return self.__totuple__()
+        return str(self.__totuple__())
 
     def __str__(self):
         return self.term
@@ -455,15 +455,14 @@ class Comment(DictLike):
     def __updatebody__(self, gram):
         """Pre-calculate and cache intermediate corpus data"""
         collection = c['Body'][self['source']]
-        term = gram.term
-        raw = gram.raw
-        pos = gram.pos
+        round_date = Arrow(self['date'].year, self['date'].month, self['date'].day).datetime
         collection.update_one(
             {
-            'date' : self['date'],
-            'term' : term,
-            'raw' : raw,
-            'pos' : pos,
+            'date' : round_date,
+            'level' : level,
+            'term' : gram.term,
+            'raw' : gram.raw,
+            'pos' : gram.pos,
             'n' : len(gram),
             'str_type' : gram.str_type.__name__
             }, {
@@ -705,10 +704,11 @@ class Vector(ArrayLike):
                 raise TypeError("{} is not a datetime.datetime object".format(date))
 
         self.count_type = count_type
-        self.start_date = start_date
-        self.stop_date = stop_date
-        self.collection = c['Body'][source]
+        self.start_date = Arrow.fromdatetime(start_date).datetime
+        self.stop_date = Arrow.fromdatetime(stop_date).datetime
+        self.body = c['Body'][source]
         self.cache = c['BodyCache'][source]
+        self.comment = c['Comment'][source]
         self.__fromdb__()
 
     def __fromdb__(self):
@@ -735,29 +735,61 @@ class Vector(ArrayLike):
         else:
             raise e.DocumentNotFound(self.n, 'date range')
 
-    def __fromcursor__(self):
-        """Build vector from comment database"""
-        # Initialize data structure
-        results = {
-        'counts' : ArrayLike(n=self.n, str_type=self.str_type),
-        'documents' : ArrayLike(n=self.n, str_type=self.str_type, null=set()),
-        'users' : ArrayLike(n=self.n, str_type=self.str_type, null=set())
-        }
-        # Pull data from cursor
-        for document in self.collection.find({
+    def __frombody__(self, start_date, stop_date):
+        for document in self.body.find({
             'date' : {
-                '$gt' : self.start_date, '$lt' : self.stop_date
+                '$gte' : self.start_date, '$lt' : self.stop_date
             },
             'n' : self.n,
             'str_type' : self.str_type.__name__
         }):
-            ix = results['counts'].__getix__(document['term'])
-            results['counts'][ix] += document['count']
-            results['documents'][ix] = results['documents'][ix] | set(document['documents'])
-            results['users'][ix] = results['documents'][ix] | set(document['users'])
+            ix = self.result['counts'].__getix__(document['term'])
+            self.result['counts'][ix] += document['count']
+            self.result['documents'][ix] = self.result['documents'][ix] | set(document['documents'])
+            self.result['users'][ix] = self.result['users'][ix] | set(document['users'])
+
+    def __fromcursor__(self):
+        # Initialize data structure
+        self.result = {
+        'counts' : ArrayLike(n=self.n, str_type=self.str_type),
+        'documents' : ArrayLike(n=self.n, str_type=self.str_type, null=set()),
+        'users' : ArrayLike(n=self.n, str_type=self.str_type, null=set())
+        }
+        split = tools.split_time(self.start_date, self.stop_date)
+        if split['n_days']:
+            self.__frombody__(split['start_day'], split['stop_day'])
+        if split['remainder_start']:
+            self.__fromcomment__(self.start_date, split['start_day'])
+        if split['remainder_stop']:
+            self.__fromcomment__(split['stop_day'], self.stop_date)
         # Get appropriate count type result
-        self.data = self.count_type(**results).get()
+        self.data = self.count_type(**self.result).get()
         self.__tocache__()
+
+    def __fromcomment__(self, start_date, stop_date):
+        """Build vector from comment database"""
+        str_type = self.str_type.__name__
+        for document in self.comment.find(
+            {
+                'date' : {
+                    '$gte' : start_date, '$lt' : stop_date
+                }
+            }, {
+                str_type : 1,
+                'user' : 1,
+                '_id' : 1
+            }
+        ):
+            gram_list = [
+                Gram(item) for item in ngrams([
+                        self.str_type(item) for item in document[str_type]
+                    ], self.n)
+            ]
+            for gram in gram_list:
+                ix = self.result['counts'].__getix__(gram.term)
+                self.result['counts'][ix] += 1
+                self.result['documents'][ix] = self.result['documents'][ix] | set(document['_id'])
+                self.result['users'][ix] = self.result['documents'][ix] | set(document['user'])
 
     def __tocache__(self):
         """Insert vector into cache"""
