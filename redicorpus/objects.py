@@ -344,9 +344,7 @@ class DictLike(object):
     def __init__(self, data=None, n_list=[1,2,3]):
         self.data = {}
         if isinstance(data, dict):
-            self.data = data
-            if isinstance(self.data['date'], float):
-                self.data['date'] = datetime.utcfromtimestamp(self.data['date'])
+            self.__fromdict__(data)
         self.n_list = n_list
         self.str_classes = StringLike.__subclasses__()
 
@@ -376,6 +374,8 @@ class DictLike(object):
             raise ValueError("Comments must have an '_id' field")
         for key in data:
             self.data[key] = data.get(key)
+        if isinstance(data.get('date'), float):
+            self.data['date'] = datetime.utcfromtimestamp(data['date'])
 
     def __todict__(self):
         return self.data
