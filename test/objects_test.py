@@ -3,6 +3,7 @@
 from arrow import Arrow
 from datetime import datetime
 import json
+from pkg_resources import resource_string
 import pytest
 from redicorpus import c, objects
 import time
@@ -83,8 +84,7 @@ def test_get_comment():
 
 def test_insert_comment():
     c['Comment']['test'].delete_one({'_id' : 'd024gzv'})
-    with open('test/data/comment.json', 'r') as f:
-        data = json.load(f)
+    data = json.loads(resource_string('test', 'data/comment.json').decode('utf-8'))
     obj = objects.insert_comment.delay(data)
     assert obj.get()
 

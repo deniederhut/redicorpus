@@ -18,7 +18,7 @@ def test_response():
     response = reddit.Response(data, 'test')
     for key in response:
         assert key
-    assert response['_id'] == 't1_d024gzv'
+    assert response['_id'] == 'd024gzv'
     assert response['date'] == datetime.utcfromtimestamp(1455645473.0)
 
 def test_client():

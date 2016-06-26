@@ -16,7 +16,7 @@ class Client(object):
         self.new_date = datetime.utcnow()
         self.source = source
 
-    def getlisting(self, params=None):
+    def getlisting(self, params):
         return self.c.get_comments(self.source, **params)
 
     def request(self):
@@ -55,8 +55,8 @@ class Response(object):
         self.translation[key] = value
 
     def __translate__(self):
-        self['_id'] = self.response.get('name')
-        self['url'] = self.response.get('permalink')
+        self['_id'] = self.response.get('id')
+        self['url'] = self.response.get('link_url') + self['_id']
         self['thread_id'] = self.response.get('link_id')
         self['parent_id'] = self.response.get('parent_id')
         self['raw'] = self.response.get('body')
