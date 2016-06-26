@@ -40,6 +40,7 @@ class Response(object):
         self.response = response
         self.translation = {
         'source' : source,
+        'get_module' : 'reddit'
         }
         self.__translate__()
 
