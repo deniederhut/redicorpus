@@ -743,7 +743,7 @@ class Vector(ArrayLike):
             },
             'n' : self.n,
             'str_type' : self.str_type.__name__
-        }):
+        }, no_cursor_timeout=True):
             ix = self.result['counts'].__getix__(document['term'])
             self.result['counts'][ix] += document['count']
             self.result['documents'][ix] = self.result['documents'][ix] | set(document['documents'])
@@ -779,7 +779,7 @@ class Vector(ArrayLike):
                 str_type : 1,
                 'user' : 1,
                 '_id' : 1
-            }
+            }, no_cursor_timeout=True
         ):
             gram_list = [
                 Gram(item) for item in ngrams([
@@ -855,7 +855,7 @@ class Map(ArrayLike):
             'n' : self.n
         }, {
         'documents' : 1
-        }):
+        }, no_cursor_timeout=True):
             for _id in document['documents']:
                 comment = get_comment(_id, self.source)
                 gram_list = []
