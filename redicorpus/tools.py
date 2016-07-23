@@ -30,9 +30,12 @@ def split_time(start_date, stop_date):
     Split start and stop datetime objects into a period of whole days, and the remainder on either end, and return it as a dictionary
     """
     result = {}
+    offset = timedelta(0)
+    if start_date.time():
+        offset = timedelta(1)
     result['start_day'] = Arrow(
         start_date.year, start_date.month, start_date.day
-    ).datetime + timedelta(1)
+    ).datetime + offset
     result['remainder_start'] = result['start_day'] - start_date
     result['stop_day'] = Arrow(
         stop_date.year, stop_date.month, stop_date.day
